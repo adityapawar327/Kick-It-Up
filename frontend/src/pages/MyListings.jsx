@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { Edit, Trash2, Package, DollarSign, Eye, X, Plus, Upload, Link as LinkIcon } from 'lucide-react'
 
 const MyListings = () => {
@@ -14,6 +15,7 @@ const MyListings = () => {
   const [editingSneaker, setEditingSneaker] = useState(null)
   const [formData, setFormData] = useState({})
   const [uploadedImages, setUploadedImages] = useState([])
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   useEffect(() => {
     if (!token) {
@@ -96,14 +98,18 @@ const MyListings = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('ARE YOU SURE YOU WANT TO DELETE THIS SNEAKER?')) return
-    
+    setDeleteConfirm(id)
+  }
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/sneakers/${id}`)
+      await axios.delete(`/api/sneakers/${deleteConfirm}`)
       toast.success('SNEAKER DELETED SUCCESSFULLY!')
+      setDeleteConfirm(null)
       fetchMySneakers()
     } catch (error) {
       toast.error(error.response?.data?.error || 'FAILED TO DELETE SNEAKER')
+      setDeleteConfirm(null)
     }
   }
 
@@ -490,6 +496,18 @@ const MyListings = () => {
               </form>
             </div>
           </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {deleteConfirm && (
+          <ConfirmDialog
+            title="KICK IT UP SAYS"
+            message="ARE YOU SURE YOU WANT TO DELETE THIS SNEAKER?"
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleteConfirm(null)}
+            confirmText="DELETE"
+            cancelText="CANCEL"
+          />
         )}
       </div>
     </div>
