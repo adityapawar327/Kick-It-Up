@@ -48,7 +48,7 @@ CREATE TABLE sneakers (
 -- Create sneaker_images table
 CREATE TABLE sneaker_images (
     sneaker_id BIGINT NOT NULL,
-    image_url VARCHAR(500),
+    image_url MEDIUMTEXT,
     FOREIGN KEY (sneaker_id) REFERENCES sneakers(id) ON DELETE CASCADE
 );
 

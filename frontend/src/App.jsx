@@ -12,6 +12,7 @@ import Favorites from './pages/Favorites'
 import MyOrders from './pages/MyOrders'
 import MyListings from './pages/MyListings'
 import Profile from './pages/Profile'
+import AboutUs from './pages/AboutUs'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Navbar />
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/about" element={<AboutUs />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/sneaker/:id" element={<SneakerDetails />} />

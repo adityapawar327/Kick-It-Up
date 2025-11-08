@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
-import { Search, Star } from 'lucide-react'
+import { Search, Star, TrendingUp } from 'lucide-react'
 
 const Home = () => {
   const { user } = useAuth()
@@ -29,7 +29,6 @@ const Home = () => {
     try {
       const response = await axios.get('/api/sneakers/all')
       setSneakers(response.data)
-      // Trigger entrance animation after data loads
       setTimeout(() => setShowContent(true), 100)
     } catch (error) {
       console.error('Failed to fetch sneakers:', error)
@@ -72,56 +71,97 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="bg-black text-white py-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-black text-white py-32 overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.05) 35px, rgba(255,255,255,.05) 70px)',
+          }}></div>
+        </div>
+
+        {/* Image Background */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=1920&q=80"
+            alt="Sneakers Background"
+            className="absolute inset-0 w-full h-full object-cover opacity-20 grayscale"
+          />
+          <div className="absolute inset-0 bg-black/50"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className={`text-sm uppercase tracking-widest mb-4 font-semibold transition-all duration-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-              THE BEST SNEAKERS ARE ONLY HERE
-            </p>
-            <h1 className={`text-display text-8xl md:text-9xl font-bold mb-12 leading-none transition-all duration-1000 delay-200 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            <div className={`inline-block mb-6 transition-all duration-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+              <div className="flex items-center justify-center space-x-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
+                <span className="text-xs uppercase tracking-widest font-bold">PREMIUM MARKETPLACE</span>
+              </div>
+            </div>
+            
+            <h1 className={`text-display text-8xl md:text-9xl lg:text-[12rem] font-bold mb-6 leading-none transition-all duration-1000 delay-200 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
               KICK IT UP
             </h1>
             
+            <p className={`text-lg md:text-xl uppercase tracking-wider mb-12 font-semibold max-w-2xl mx-auto transition-all duration-700 delay-300 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              DISCOVER, BUY & SELL AUTHENTIC SNEAKERS
+            </p>
+            
             {/* Search Bar */}
             <div className={`max-w-2xl mx-auto transition-all duration-1000 delay-500 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <div className="relative">
+              <div className="relative group">
                 <input
                   type="text"
-                  placeholder="SEARCH..."
+                  placeholder="SEARCH FOR YOUR NEXT PAIR..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-8 py-5 rounded-full bg-white text-black border-2 border-white focus:outline-none text-sm font-semibold uppercase tracking-wider transition-all duration-300 hover:shadow-2xl"
+                  className="w-full px-8 py-6 rounded-full bg-white text-black border-2 border-white focus:outline-none text-sm font-semibold uppercase tracking-wider transition-all duration-300 hover:shadow-2xl focus:shadow-2xl"
                 />
-                <Search className="absolute right-6 top-1/2 transform -translate-y-1/2 h-6 w-6 text-black" />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-black rounded-full p-3 group-hover:scale-110 transition-transform">
+                  <Search className="h-5 w-5 text-white" />
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Decorative Elements */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
       </div>
 
       {/* Filters */}
-      <div className={`border-b-2 border-black py-8 transition-all duration-1000 delay-700 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`border-b-2 border-black py-12 bg-gray-50 transition-all duration-1000 delay-700 ${showContent ? 'opacity-100' : 'opacity-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-3 justify-center mb-6">
+          <div className="text-center mb-8">
+            <h3 className="text-display text-3xl font-bold mb-2 uppercase">FILTER BY BRAND</h3>
+            <div className="w-20 h-1 bg-black mx-auto"></div>
+          </div>
+          
+          <div className="flex flex-wrap gap-3 justify-center mb-8">
             {brands.map(brand => (
               <button
                 key={brand}
                 onClick={() => toggleBrand(brand)}
-                className={`px-6 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider transition-all ${
-                  selectedBrands.includes(brand) ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+                className={`px-8 py-4 rounded-full border-2 border-black font-bold uppercase text-sm tracking-wider transition-all hover:scale-105 ${
+                  selectedBrands.includes(brand) ? 'bg-black text-white shadow-lg' : 'bg-white text-black hover:bg-gray-100'
                 }`}
               >
                 {brand}
               </button>
             ))}
           </div>
+          
+          <div className="text-center mb-6">
+            <h3 className="text-display text-3xl font-bold mb-2 uppercase">CONDITION</h3>
+            <div className="w-20 h-1 bg-black mx-auto"></div>
+          </div>
+          
           <div className="flex flex-wrap gap-3 justify-center">
             {conditions.map(condition => (
               <button
                 key={condition}
                 onClick={() => setSelectedCondition(condition)}
-                className={`px-6 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider transition-all ${
-                  selectedCondition === condition ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+                className={`px-8 py-4 rounded-full border-2 border-black font-bold uppercase text-sm tracking-wider transition-all hover:scale-105 ${
+                  selectedCondition === condition ? 'bg-black text-white shadow-lg' : 'bg-white text-black hover:bg-gray-100'
                 }`}
               >
                 {condition}
@@ -132,24 +172,29 @@ const Home = () => {
       </div>
 
       {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className={`mb-12 transition-all duration-1000 delay-900 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <h2 className="text-display text-6xl font-bold text-center mb-4">OUR COLLECTION</h2>
-          <p className="text-center text-gray-600 uppercase text-sm tracking-wider font-semibold">
-            {filteredSneakers.length} SNEAKERS FOUND
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className={`text-center mb-16 transition-all duration-1000 delay-900 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <h2 className="text-display text-7xl font-bold mb-4 uppercase">OUR COLLECTION</h2>
+          <div className="w-32 h-2 bg-black mx-auto mb-6"></div>
+          <p className="text-gray-600 uppercase text-sm tracking-wider font-semibold">
+            {filteredSneakers.length} PREMIUM SNEAKERS AVAILABLE
           </p>
         </div>
 
         {loading ? (
           <div className="text-center py-32">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-black border-t-transparent"></div>
-            <p className="mt-6 text-sm uppercase tracking-wider font-semibold text-gray-600">LOADING COLLECTION...</p>
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-black border-t-transparent mb-6"></div>
+            <p className="text-sm uppercase tracking-wider font-semibold text-gray-600">LOADING COLLECTION...</p>
           </div>
         ) : filteredSneakers.length === 0 ? (
           <div className="text-center py-32">
-            <p className="text-2xl font-bold uppercase tracking-wider mb-6">NO SNEAKERS FOUND</p>
+            <div className="inline-block p-8 border-2 border-black rounded-full mb-8">
+              <Search className="h-20 w-20 text-black" />
+            </div>
+            <p className="text-display text-4xl font-bold uppercase tracking-wider mb-6">NO SNEAKERS FOUND</p>
+            <p className="text-sm uppercase tracking-wider text-gray-600 font-semibold mb-8">TRY ADJUSTING YOUR FILTERS</p>
             <button onClick={() => { setSelectedBrands([]); setSelectedCondition('ALL'); setSearchTerm('') }} className="btn-primary">
-              CLEAR FILTERS
+              CLEAR ALL FILTERS
             </button>
           </div>
         ) : (
@@ -160,11 +205,11 @@ const Home = () => {
                 <Link
                   key={sneaker.id}
                   to={`/sneaker/${sneaker.id}`}
-                  className={`card group transition-all duration-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                  className={`card group transition-all duration-700 hover:scale-105 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                   style={{transitionDelay: `${1000 + index * 100}ms`}}
                 >
                   {isOwnListing && (
-                    <div className="absolute top-4 right-4 z-10 bg-black text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider">
+                    <div className="absolute top-4 right-4 z-10 bg-black text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
                       YOUR LISTING
                     </div>
                   )}
@@ -174,15 +219,16 @@ const Home = () => {
                       alt={sneaker.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
                   </div>
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0 pr-2">
                         <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{sneaker.brand}</p>
-                        <h3 className="font-bold text-xl uppercase tracking-wide break-words">{sneaker.name}</h3>
+                        <h3 className="font-bold text-xl uppercase tracking-wide break-words group-hover:text-gray-700 transition-colors">{sneaker.name}</h3>
                       </div>
                       {sneaker.averageRating > 0 && (
-                        <div className="flex items-center space-x-1 bg-black text-white px-3 py-1 rounded-full flex-shrink-0">
+                        <div className="flex items-center space-x-1 bg-black text-white px-3 py-1 rounded-full flex-shrink-0 shadow-md">
                           <Star className="h-4 w-4 fill-white" />
                           <span className="text-sm font-bold">{sneaker.averageRating.toFixed(1)}</span>
                         </div>
@@ -191,9 +237,9 @@ const Home = () => {
                     <p className="text-sm text-gray-600 mb-4 uppercase tracking-wider font-semibold">
                       SIZE {sneaker.size} • {sneaker.condition}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pt-4 border-t-2 border-gray-100">
                       <p className="text-3xl font-bold">${sneaker.price}</p>
-                      <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider ${
+                      <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm ${
                         sneaker.status === 'AVAILABLE' 
                           ? 'bg-black text-white' 
                           : 'bg-gray-200 text-gray-800'
@@ -207,6 +253,19 @@ const Home = () => {
             })}
           </div>
         )}
+      </div>
+
+      {/* Footer CTA */}
+      <div className="bg-black text-white py-20 border-t-2 border-black">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-display text-6xl font-bold mb-6 uppercase">READY TO SELL?</h2>
+          <p className="text-lg uppercase tracking-wider mb-10 font-semibold">
+            LIST YOUR SNEAKERS AND REACH THOUSANDS OF BUYERS
+          </p>
+          <Link to="/create-sneaker" className="inline-block bg-white text-black px-12 py-5 rounded-full font-bold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all border-2 border-white hover:scale-105 shadow-lg">
+            START SELLING NOW
+          </Link>
+        </div>
       </div>
     </div>
   )

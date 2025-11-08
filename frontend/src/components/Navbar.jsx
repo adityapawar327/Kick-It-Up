@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Menu, X, User, ShoppingBag, Heart, Package } from 'lucide-react'
+import { Menu, X, User } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -59,6 +59,7 @@ const Navbar = () => {
             {user ? (
               <>
                 <NavLink to="/">HOME</NavLink>
+                <NavLink to="/about">ABOUT</NavLink>
                 <NavLink to="/favorites">FAVORITES</NavLink>
                 <NavLink to="/my-orders">ORDERS</NavLink>
                 <NavLink to="/my-listings">MY LISTINGS</NavLink>
@@ -105,6 +106,8 @@ const Navbar = () => {
               </>
             ) : (
               <>
+                <NavLink to="/">HOME</NavLink>
+                <NavLink to="/about">ABOUT</NavLink>
                 <NavLink to="/login">LOGIN</NavLink>
                 <Link to="/register" className="btn-primary">
                   SIGN UP
@@ -134,6 +137,9 @@ const Navbar = () => {
                 <Link to="/" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
                   HOME
                 </Link>
+                <Link to="/about" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
+                  ABOUT
+                </Link>
                 <Link to="/favorites" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
                   FAVORITES
                 </Link>
@@ -161,6 +167,12 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="space-y-3">
+                <Link to="/" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
+                  HOME
+                </Link>
+                <Link to="/about" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
+                  ABOUT
+                </Link>
                 <Link to="/login" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
                   LOGIN
                 </Link>

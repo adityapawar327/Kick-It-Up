@@ -39,7 +39,6 @@ const SneakerDetails = () => {
     try {
       const response = await axios.get(`/api/reviews/sneaker/${id}`)
       setReviews(response.data)
-      // Check if current user has already reviewed
       if (user) {
         const hasReviewed = response.data.some(review => review.username === user.username)
         setUserHasReviewed(hasReviewed)
@@ -56,17 +55,11 @@ const SneakerDetails = () => {
     }
     try {
       const sneakerId = parseInt(id)
-      console.log('Adding to favorites, sneaker ID:', sneakerId)
-      console.log('Token:', token)
-      console.log('Authorization header:', axios.defaults.headers.common['Authorization'])
-      const response = await axios.post(`/api/favorites/${sneakerId}`)
-      console.log('Favorite added successfully:', response.data)
+      await axios.post(`/api/favorites/${sneakerId}`)
       setIsFavorite(true)
-      toast.success('Added to favorites!')
+      toast.success('ADDED TO FAVORITES!')
     } catch (error) {
-      console.error('Failed to add to favorites:', error)
-      console.error('Error response:', error.response)
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to add to favorites'
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'FAILED TO ADD TO FAVORITES'
       toast.error(errorMsg)
     }
   }
@@ -79,11 +72,11 @@ const SneakerDetails = () => {
     }
     try {
       await axios.post('/api/orders', { sneakerId: id, ...orderData })
-      toast.success('Order placed successfully!')
+      toast.success('ORDER PLACED SUCCESSFULLY!')
       setShowOrderForm(false)
       setTimeout(() => navigate('/my-orders'), 1000)
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to place order'
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'FAILED TO PLACE ORDER'
       toast.error(errorMsg)
     }
   }
@@ -100,29 +93,24 @@ const SneakerDetails = () => {
         rating: reviewData.rating, 
         comment: reviewData.comment 
       }
-      console.log('Submitting review:', payload)
-      console.log('Token:', token)
-      const response = await axios.post('/api/reviews', payload)
-      console.log('Review submitted successfully:', response.data)
-      toast.success('Review submitted successfully!')
+      await axios.post('/api/reviews', payload)
+      toast.success('REVIEW SUBMITTED SUCCESSFULLY!')
       setReviewData({ rating: 5, comment: '' })
       setUserHasReviewed(true)
       fetchReviews()
-      fetchSneakerDetails() // Refresh to update average rating
+      fetchSneakerDetails()
     } catch (error) {
-      console.error('Failed to submit review:', error)
-      console.error('Error response:', error.response)
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to submit review'
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'FAILED TO SUBMIT REVIEW'
       toast.error(errorMsg)
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mb-4"></div>
-          <p className="text-gray-600 font-semibold">Loading sneaker details...</p>
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-black border-t-transparent mb-4"></div>
+          <p className="text-sm uppercase tracking-wider font-semibold">LOADING SNEAKER DETAILS...</p>
         </div>
       </div>
     )
@@ -130,11 +118,11 @@ const SneakerDetails = () => {
 
   if (!sneaker) {
     return (
-      <div className="min-h-screen pt-32 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Sneaker not found</h2>
+          <h2 className="text-display text-4xl font-bold mb-6">SNEAKER NOT FOUND</h2>
           <button onClick={() => navigate('/')} className="btn-primary">
-            Back to Home
+            BACK TO HOME
           </button>
         </div>
       </div>
@@ -144,13 +132,13 @@ const SneakerDetails = () => {
   const isOwnListing = user && sneaker.seller?.username === user.username
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen bg-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="card overflow-hidden animate-slideUp">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-12">
             {/* Image Gallery */}
             <div className="space-y-4">
-              <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl overflow-hidden">
+              <div className="aspect-square bg-gray-100 rounded-3xl overflow-hidden border-2 border-black">
                 <img
                   src={sneaker.imageUrls?.[0] || 'https://via.placeholder.com/600'}
                   alt={sneaker.name}
@@ -160,7 +148,7 @@ const SneakerDetails = () => {
               {sneaker.imageUrls?.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
                   {sneaker.imageUrls.slice(1).map((url, idx) => (
-                    <div key={idx} className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform">
+                    <div key={idx} className="aspect-square bg-gray-100 rounded-2xl overflow-hidden border-2 border-black cursor-pointer hover:scale-105 transition-transform">
                       <img src={url} alt={`${sneaker.name} ${idx + 2}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
@@ -172,76 +160,78 @@ const SneakerDetails = () => {
             <div>
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-blue-600 mb-2">{sneaker.brand}</p>
-                  <h1 className="text-5xl font-bold text-gray-900 mb-4 break-words">{sneaker.name}</h1>
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-2">{sneaker.brand}</p>
+                  <h1 className="text-display text-5xl font-bold mb-4 break-words uppercase">{sneaker.name}</h1>
                   {sneaker.averageRating > 0 && (
                     <div className="flex items-center space-x-3">
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-6 w-6 ${i < sneaker.averageRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                            className={`h-6 w-6 ${i < sneaker.averageRating ? 'text-black fill-black' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
-                      <span className="text-gray-600 font-semibold">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+                      <span className="text-sm uppercase tracking-wider font-semibold text-gray-600">
+                        ({reviews.length} {reviews.length === 1 ? 'REVIEW' : 'REVIEWS'})
+                      </span>
                     </div>
                   )}
                 </div>
                 <button 
                   onClick={handleAddToFavorites} 
                   disabled={isFavorite} 
-                  className="flex-shrink-0 p-4 rounded-full glass hover:shadow-lg transition-all hover:scale-110 disabled:opacity-50"
+                  className="flex-shrink-0 w-14 h-14 rounded-full border-2 border-black bg-white flex items-center justify-center hover:bg-black hover:text-white transition-all disabled:opacity-50"
                 >
-                  <Heart className={`h-7 w-7 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                  <Heart className={`h-7 w-7 ${isFavorite ? 'fill-current' : ''}`} />
                 </button>
               </div>
 
               <div className="mb-10">
-                <p className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-8">
+                <p className="text-6xl font-bold mb-8">
                   ${sneaker.price}
                 </p>
                 <div className="grid grid-cols-2 gap-6">
-                  <div className="glass p-8 rounded-3xl">
-                    <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">Size</p>
-                    <p className="font-bold text-3xl text-gray-900">{sneaker.size}</p>
+                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">SIZE</p>
+                    <p className="font-bold text-3xl">{sneaker.size}</p>
                   </div>
-                  <div className="glass p-8 rounded-3xl">
-                    <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">Condition</p>
-                    <p className="font-bold text-3xl text-gray-900">{sneaker.condition}</p>
+                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">CONDITION</p>
+                    <p className="font-bold text-3xl uppercase">{sneaker.condition}</p>
                   </div>
-                  <div className="glass p-8 rounded-3xl">
-                    <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">Color</p>
-                    <p className="font-bold text-3xl text-gray-900 break-words">{sneaker.color}</p>
+                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">COLOR</p>
+                    <p className="font-bold text-xl uppercase break-words">{sneaker.color}</p>
                   </div>
-                  <div className="glass p-8 rounded-3xl">
-                    <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">Stock</p>
-                    <p className="font-bold text-3xl text-gray-900">{sneaker.stock}</p>
+                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">STOCK</p>
+                    <p className="font-bold text-3xl">{sneaker.stock}</p>
                   </div>
                 </div>
               </div>
 
               <div className="mb-10">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Description</h3>
-                <p className="text-gray-700 leading-relaxed text-lg break-words">{sneaker.description}</p>
+                <h3 className="text-display text-2xl font-bold mb-4 uppercase">DESCRIPTION</h3>
+                <p className="text-gray-700 leading-relaxed break-words">{sneaker.description}</p>
               </div>
 
               {isOwnListing ? (
-                <div className="glass rounded-3xl p-6 text-center border-2 border-blue-200">
-                  <p className="text-blue-800 font-bold text-lg">This is your listing</p>
-                  <p className="text-blue-600 mt-2">You cannot purchase your own sneakers</p>
+                <div className="bg-white border-2 border-black rounded-3xl p-6 text-center">
+                  <p className="font-bold text-sm uppercase tracking-wider">THIS IS YOUR LISTING</p>
+                  <p className="text-gray-600 mt-2 text-sm uppercase tracking-wider">YOU CANNOT PURCHASE YOUR OWN SNEAKERS</p>
                 </div>
               ) : sneaker.status === 'AVAILABLE' ? (
                 <button
                   onClick={() => setShowOrderForm(true)}
-                  className="w-full btn-primary flex items-center justify-center space-x-3 text-lg py-4"
+                  className="w-full btn-primary flex items-center justify-center space-x-3"
                 >
                   <ShoppingCart className="h-6 w-6" />
-                  <span>Buy Now</span>
+                  <span>BUY NOW</span>
                 </button>
               ) : (
-                <div className="glass rounded-3xl p-6 text-center border-2 border-red-200">
-                  <p className="text-red-800 font-bold text-lg">This sneaker is no longer available</p>
+                <div className="bg-gray-200 border-2 border-gray-800 rounded-3xl p-6 text-center">
+                  <p className="font-bold text-sm uppercase tracking-wider">THIS SNEAKER IS NO LONGER AVAILABLE</p>
                 </div>
               )}
             </div>
@@ -250,34 +240,34 @@ const SneakerDetails = () => {
           {/* Order Form Modal */}
           {showOrderForm && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-              <div className="glass rounded-3xl p-8 max-w-md w-full animate-scaleIn">
+              <div className="bg-white border-2 border-black rounded-3xl p-8 max-w-md w-full animate-scaleIn">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    Complete Your Order
+                  <h3 className="text-display text-3xl font-bold uppercase">
+                    COMPLETE ORDER
                   </h3>
-                  <button onClick={() => setShowOrderForm(false)} className="p-2 hover:bg-gray-100 rounded-full">
-                    <X className="h-6 w-6" />
+                  <button onClick={() => setShowOrderForm(false)} className="w-10 h-10 border-2 border-black rounded-full hover:bg-black hover:text-white transition-all flex items-center justify-center">
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
                 <form onSubmit={handleOrder} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                    <label className="block text-sm font-bold uppercase tracking-wider text-black mb-3">
                       <MapPin className="inline h-4 w-4 mr-1" />
-                      Shipping Address
+                      SHIPPING ADDRESS
                     </label>
                     <textarea
                       required
                       value={orderData.shippingAddress}
                       onChange={(e) => setOrderData({ ...orderData, shippingAddress: e.target.value })}
-                      className="input-field"
+                      className="w-full px-6 py-4 bg-white border-2 border-black rounded-3xl focus:outline-none focus:ring-0 transition-all duration-300 text-sm font-medium"
                       rows="3"
-                      placeholder="Enter your full shipping address"
+                      placeholder="ENTER YOUR FULL SHIPPING ADDRESS"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                    <label className="block text-sm font-bold uppercase tracking-wider text-black mb-3">
                       <Phone className="inline h-4 w-4 mr-1" />
-                      Phone Number
+                      PHONE NUMBER
                     </label>
                     <input
                       type="tel"
@@ -285,12 +275,12 @@ const SneakerDetails = () => {
                       value={orderData.phoneNumber}
                       onChange={(e) => setOrderData({ ...orderData, phoneNumber: e.target.value })}
                       className="input-field"
-                      placeholder="Your contact number"
+                      placeholder="YOUR CONTACT NUMBER"
                     />
                   </div>
                   <div className="flex space-x-3 pt-4">
-                    <button type="submit" className="flex-1 btn-primary">Place Order</button>
-                    <button type="button" onClick={() => setShowOrderForm(false)} className="flex-1 btn-secondary">Cancel</button>
+                    <button type="submit" className="flex-1 btn-primary">PLACE ORDER</button>
+                    <button type="button" onClick={() => setShowOrderForm(false)} className="flex-1 btn-secondary">CANCEL</button>
                   </div>
                 </form>
               </div>
@@ -298,18 +288,18 @@ const SneakerDetails = () => {
           )}
 
           {/* Reviews Section */}
-          <div className="border-t border-gray-200/50 p-8 lg:p-12">
-            <div className="flex items-center space-x-3 mb-8">
-              <MessageSquare className="h-8 w-8 text-blue-600" />
-              <h2 className="text-3xl font-bold text-gray-900">Customer Reviews</h2>
+          <div className="border-t-2 border-black p-8 lg:p-12">
+            <div className="flex items-center space-x-4 mb-8">
+              <MessageSquare className="h-8 w-8 text-black" />
+              <h2 className="text-display text-4xl font-bold uppercase">CUSTOMER REVIEWS</h2>
             </div>
             
             {token && !isOwnListing && !userHasReviewed && (
-              <div className="glass rounded-3xl p-8 mb-8 animate-slideUp">
-                <h3 className="text-xl font-bold mb-6 text-gray-900">Write a Review</h3>
+              <div className="bg-white border-2 border-black rounded-3xl p-8 mb-8 animate-slideUp">
+                <h3 className="text-display text-2xl font-bold mb-6 uppercase">WRITE A REVIEW</h3>
                 <form onSubmit={handleReview} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-3">Rating</label>
+                    <label className="block text-sm font-bold uppercase tracking-wider text-black mb-3">RATING</label>
                     <div className="flex space-x-2">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -318,65 +308,65 @@ const SneakerDetails = () => {
                           onClick={() => setReviewData({ ...reviewData, rating: star })}
                           className="focus:outline-none hover:scale-110 transition-transform"
                         >
-                          <Star className={`h-10 w-10 ${star <= reviewData.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                          <Star className={`h-10 w-10 ${star <= reviewData.rating ? 'text-black fill-black' : 'text-gray-300'}`} />
                         </button>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-3">Comment</label>
+                    <label className="block text-sm font-bold uppercase tracking-wider text-black mb-3">COMMENT</label>
                     <textarea
                       required
                       value={reviewData.comment}
                       onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
-                      className="input-field"
+                      className="w-full px-6 py-4 bg-white border-2 border-black rounded-3xl focus:outline-none focus:ring-0 transition-all duration-300 text-sm font-medium"
                       rows="4"
-                      placeholder="Share your experience with this sneaker..."
+                      placeholder="SHARE YOUR EXPERIENCE WITH THIS SNEAKER..."
                     />
                   </div>
-                  <button type="submit" className="btn-primary w-full">Submit Review</button>
+                  <button type="submit" className="btn-primary w-full">SUBMIT REVIEW</button>
                 </form>
               </div>
             )}
 
             {token && !isOwnListing && userHasReviewed && (
-              <div className="glass rounded-3xl p-6 mb-8 text-center border-2 border-green-200">
-                <p className="text-green-800 font-bold text-lg">✓ You have already reviewed this sneaker</p>
-                <p className="text-green-600 mt-2">Thank you for your feedback!</p>
+              <div className="bg-white border-2 border-black rounded-3xl p-6 mb-8 text-center">
+                <p className="font-bold text-sm uppercase tracking-wider">✓ YOU HAVE ALREADY REVIEWED THIS SNEAKER</p>
+                <p className="text-gray-600 mt-2 text-sm uppercase tracking-wider">THANK YOU FOR YOUR FEEDBACK!</p>
               </div>
             )}
 
             {!token && (
-              <div className="glass rounded-3xl p-6 mb-8 text-center">
-                <p className="text-gray-700 font-semibold mb-4">Please login to write a review</p>
+              <div className="bg-white border-2 border-black rounded-3xl p-6 mb-8 text-center">
+                <p className="font-semibold mb-4 text-sm uppercase tracking-wider">PLEASE LOGIN TO WRITE A REVIEW</p>
                 <button onClick={() => navigate('/login')} className="btn-primary">
-                  Login
+                  LOGIN
                 </button>
               </div>
             )}
 
             {reviews.length === 0 ? (
               <div className="text-center py-16">
-                <div className="inline-block p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full mb-6">
-                  <MessageSquare className="h-20 w-20 text-gray-300" />
+                <div className="inline-block p-8 border-2 border-black rounded-full mb-6">
+                  <MessageSquare className="h-20 w-20 text-black" />
                 </div>
-                <p className="text-gray-500 text-xl font-semibold">No reviews yet. Be the first to review!</p>
+                <p className="text-sm uppercase tracking-wider font-semibold text-gray-600">NO REVIEWS YET. BE THE FIRST TO REVIEW!</p>
               </div>
             ) : (
               <div className="space-y-6">
                 {reviews.map((review, index) => (
-                  <div key={review.id} className="glass rounded-3xl p-8 animate-slideUp hover:shadow-2xl transition-shadow" style={{animationDelay: `${index * 0.1}s`}}>
+                  <div key={review.id} className="bg-white border-2 border-black rounded-3xl p-8 animate-slideUp hover:shadow-2xl transition-shadow" style={{animationDelay: `${index * 0.1}s`}}>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                       <div className="flex items-center space-x-4">
-                        <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        <div className="w-14 h-14 bg-black rounded-full flex items-center justify-center text-white font-bold text-xl">
                           {review.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-xl text-gray-900">{review.username}</p>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="font-bold text-xl uppercase">{review.username}</p>
+                          <p className="text-xs text-gray-600 mt-1 uppercase tracking-wider">
                             {new Date(review.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
-                              month: 'long',
+                              month: 'short',
                               day: 'numeric'
                             })}
                           </p>
@@ -384,12 +374,12 @@ const SneakerDetails = () => {
                       </div>
                       <div className="flex space-x-1">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`h-6 w-6 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                          <Star key={i} className={`h-6 w-6 ${i < review.rating ? 'text-black fill-black' : 'text-gray-300'}`} />
                         ))}
                       </div>
                     </div>
                     <div className="pl-0 sm:pl-18">
-                      <p className="text-gray-700 leading-relaxed text-lg break-words whitespace-pre-wrap">{review.comment}</p>
+                      <p className="text-gray-700 leading-relaxed break-words whitespace-pre-wrap">{review.comment}</p>
                     </div>
                   </div>
                 ))}
