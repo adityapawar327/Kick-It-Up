@@ -21,15 +21,15 @@ Thumbs.db
 .settings/
 *.sublime-project
 *.sublime-workspace
+.fleet/
+.metals/
+.bsp/
 
 # Backend - Java/Spring Boot
 backend/target/
 backend/build/
 backend/bin/
 backend/.gradle/
-backend/gradle/
-backend/gradlew
-backend/gradlew.bat
 backend/out/
 *.class
 *.jar
@@ -39,12 +39,17 @@ backend/out/
 *.tmp
 *.bak
 
+# Keep Gradle wrapper
+!backend/gradle/
+!backend/gradlew
+!backend/gradlew.bat
+
 # Backend - Sensitive Configuration
 backend/src/main/resources/application-prod.properties
 backend/src/main/resources/application-local.properties
 **/application-secret.properties
 
-# Frontend - Node/React
+# Frontend - Node/React/Vite
 frontend/node_modules/
 frontend/build/
 frontend/dist/
@@ -58,10 +63,20 @@ frontend/.serverless/
 frontend/.fusebox/
 frontend/.dynamodb/
 frontend/.tern-port
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+frontend/.turbo/
+frontend/.vercel/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Keep example env files
+!.env.example
+!**/.env.example
 
 # Logs
 logs/
@@ -71,14 +86,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 pnpm-debug.log*
-
-# Environment Variables
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-.env.*.local
 
 # Database
 *.db
@@ -96,6 +103,7 @@ static/uploads/
 coverage/
 *.lcov
 .nyc_output/
+.jest/
 
 # Temporary Files
 tmp/
@@ -103,14 +111,10 @@ temp/
 *.tmp
 *.temp
 
-# Package Manager
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Documentation - exclude all .md files except README.md
-*.md
-!README.md
+# Package Manager Lock Files (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
 # Sensitive Information
 secrets/
@@ -127,6 +131,42 @@ credentials/
 *.bak
 *.old
 
-# Test and Script Files
-*.bat
-*.http
+# Deployment
+.vercel
+.railway
+.render
+
+# OS specific
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
