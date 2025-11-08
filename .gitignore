@@ -126,3 +126,7 @@ credentials/
 *.backup
 *.bak
 *.old
+
+# Test and Script Files
+*.bat
+*.http
