@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
+import { useCurrency } from '../context/CurrencyContext'
 import { Search, Star, TrendingUp } from 'lucide-react'
 
 const Home = () => {
   const { user } = useAuth()
+  const { formatPrice } = useCurrency()
   const [sneakers, setSneakers] = useState([])
   const [filteredSneakers, setFilteredSneakers] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -13,6 +15,8 @@ const Home = () => {
   const [selectedBrands, setSelectedBrands] = useState([])
   const [selectedCondition, setSelectedCondition] = useState('ALL')
   const [showContent, setShowContent] = useState(false)
+  const [expandedCard, setExpandedCard] = useState(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const brands = ['NIKE', 'ADIDAS', 'NEW BALANCE', 'PUMA', 'CONVERSE', 'VANS']
   const conditions = ['ALL', 'NEW', 'LIKE NEW', 'USED']
@@ -25,13 +29,40 @@ const Home = () => {
     applyFilters()
   }, [sneakers, selectedBrands, selectedCondition, searchTerm])
 
+  useEffect(() => {
+    let imageSlider = null
+    if (expandedCard) {
+      const sneaker = filteredSneakers.find(s => s.id === expandedCard)
+      if (sneaker?.imageUrls?.length > 1) {
+        imageSlider = setInterval(() => {
+          setCurrentImageIndex(prev => (prev + 1) % sneaker.imageUrls.length)
+        }, 2000)
+      }
+    }
+    return () => {
+      if (imageSlider) clearInterval(imageSlider)
+    }
+  }, [expandedCard, filteredSneakers])
+
+  const handleCardHover = (sneakerId) => {
+    const timer = setTimeout(() => {
+      setExpandedCard(sneakerId)
+      setCurrentImageIndex(0)
+    }, 3000)
+    
+    return () => clearTimeout(timer)
+  }
+
   const fetchSneakers = async () => {
     try {
-      const response = await axios.get('/api/sneakers/all')
+      console.log('Fetching sneakers from /sneakers/all...')
+      const response = await axios.get('/sneakers/all')
+      console.log('Response received:', response.data.length, 'sneakers')
       setSneakers(response.data)
       setTimeout(() => setShowContent(true), 100)
     } catch (error) {
       console.error('Failed to fetch sneakers:', error)
+      console.error('Error details:', error.response?.data || error.message)
     } finally {
       setLoading(false)
     }
@@ -198,29 +229,58 @@ const Home = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" id="sneaker-grid">
             {filteredSneakers.map((sneaker, index) => {
               const isOwnListing = user && sneaker.seller?.username === user.username
+              const isExpanded = expandedCard === sneaker.id
+              const isBlurred = expandedCard && expandedCard !== sneaker.id
+              
               return (
-                <Link
+                <div
                   key={sneaker.id}
-                  to={`/sneaker/${sneaker.id}`}
-                  className={`card group transition-all duration-700 hover:scale-105 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                  className={`relative transition-all duration-700 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${isBlurred ? 'depth-blur' : ''} ${isExpanded ? 'col-span-1 lg:col-span-2 row-span-2' : ''}`}
                   style={{transitionDelay: `${1000 + index * 100}ms`}}
+                  onMouseEnter={() => {
+                    const cleanup = handleCardHover(sneaker.id)
+                    sneaker._cleanup = cleanup
+                  }}
+                  onMouseLeave={() => {
+                    if (sneaker._cleanup) sneaker._cleanup()
+                    setExpandedCard(null)
+                    setCurrentImageIndex(0)
+                  }}
                 >
-                  {isOwnListing && (
-                    <div className="absolute top-4 right-4 z-10 bg-black text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
-                      YOUR LISTING
+                  <Link
+                    to={`/sneaker/${sneaker.id}`}
+                    className={`card group block h-full ${isExpanded ? 'depth-focus' : 'hover:scale-105'}`}
+                  >
+                    {isOwnListing && (
+                      <div className="absolute top-4 right-4 z-10 bg-black text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                        YOUR LISTING
+                      </div>
+                    )}
+                    <div className={`${isExpanded ? 'aspect-video' : 'aspect-square'} bg-gray-100 overflow-hidden relative transition-all duration-500`}>
+                      <img
+                        src={isExpanded && sneaker.imageUrls?.length > 1 
+                          ? sneaker.imageUrls[currentImageIndex] 
+                          : sneaker.imageUrls?.[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500'}
+                        alt={sneaker.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
+                      {isExpanded && sneaker.imageUrls?.length > 1 && (
+                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                          {sneaker.imageUrls.map((_, idx) => (
+                            <div
+                              key={idx}
+                              className={`w-2 h-2 rounded-full transition-all ${
+                                idx === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className="aspect-square bg-gray-100 overflow-hidden relative">
-                    <img
-                      src={sneaker.imageUrls?.[0] || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500'}
-                      alt={sneaker.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
-                  </div>
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0 pr-2">
@@ -237,8 +297,20 @@ const Home = () => {
                     <p className="text-sm text-gray-600 mb-4 uppercase tracking-wider font-semibold">
                       SIZE {sneaker.size} • {sneaker.condition}
                     </p>
+                    {isExpanded && (
+                      <div className="px-6 py-4 bg-gray-50 border-t-2 border-gray-100">
+                        <p className="text-sm text-gray-700 line-clamp-2 mb-2">{sneaker.description}</p>
+                        <div className="flex items-center space-x-4 text-xs text-gray-600 uppercase tracking-wider">
+                          <span>SIZE: {sneaker.size}</span>
+                          <span>•</span>
+                          <span>{sneaker.condition}</span>
+                          <span>•</span>
+                          <span>STOCK: {sneaker.stock}</span>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between pt-4 border-t-2 border-gray-100">
-                      <p className="text-3xl font-bold">${sneaker.price}</p>
+                      <p className="text-3xl font-bold">{formatPrice(sneaker.price)}</p>
                       <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm ${
                         sneaker.status === 'AVAILABLE' 
                           ? 'bg-black text-white' 
@@ -248,7 +320,8 @@ const Home = () => {
                       </span>
                     </div>
                   </div>
-                </Link>
+                  </Link>
+                </div>
               )
             })}
           </div>

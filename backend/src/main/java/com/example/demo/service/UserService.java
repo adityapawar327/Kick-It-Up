@@ -23,6 +23,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @SuppressWarnings("null")
     public User updateProfile(UserProfileRequest request) {
         User user = getCurrentUser();
 
@@ -41,6 +42,15 @@ public class UserService {
         if (request.getAddress() != null) {
             user.setAddress(request.getAddress());
         }
+        if (request.getProfileImage() != null) {
+            user.setProfileImage(request.getProfileImage());
+        }
+        if (request.getIsSeller() != null) {
+            user.setIsSeller(request.getIsSeller());
+        }
+        if (request.getAboutMe() != null) {
+            user.setAboutMe(request.getAboutMe());
+        }
 
         return userRepository.save(user);
     }
@@ -57,6 +67,9 @@ public class UserService {
     }
 
     public User getUserById(Long id) {
+        if (id == null) {
+            throw new RuntimeException("User ID cannot be null");
+        }
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { Heart, Trash2 } from 'lucide-react'
 
@@ -20,7 +20,7 @@ const Favorites = () => {
 
   const fetchFavorites = async () => {
     try {
-      const response = await axios.get('/api/favorites')
+      const response = await axios.get('/favorites')
       setFavorites(response.data)
     } catch (error) {
       console.error('Failed to fetch favorites:', error)
@@ -31,7 +31,7 @@ const Favorites = () => {
 
   const removeFavorite = async (sneakerId) => {
     try {
-      await axios.delete(`/api/favorites/${sneakerId}`)
+      await axios.delete(`/favorites/${sneakerId}`)
       setFavorites(favorites.filter(fav => fav.id !== sneakerId))
     } catch (error) {
       console.error('Failed to remove favorite:', error)

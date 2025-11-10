@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { Plus, X, Upload, Link as LinkIcon } from 'lucide-react'
@@ -22,6 +22,7 @@ const CreateSneaker = () => {
   })
   const [uploadedImages, setUploadedImages] = useState([])
   const [loading, setLoading] = useState(false)
+  const [generatingAI, setGeneratingAI] = useState(false)
 
   if (!token) {
     navigate('/login')
@@ -70,7 +71,7 @@ const CreateSneaker = () => {
         stock: parseInt(formData.stock),
         imageUrls: allImages
       }
-      await axios.post('/api/sneakers', data)
+      await axios.post('/sneakers', data)
       toast.success('SNEAKER LISTED SUCCESSFULLY!')
       navigate('/dashboard')
     } catch (error) {
@@ -93,6 +94,74 @@ const CreateSneaker = () => {
     const newUrls = [...formData.imageUrls]
     newUrls[index] = value
     setFormData({ ...formData, imageUrls: newUrls })
+  }
+
+  const generateAIDescription = async () => {
+    if (!formData.name || !formData.brand) {
+      toast.error('PLEASE ENTER SNEAKER NAME AND BRAND FIRST')
+      return
+    }
+
+    setGeneratingAI(true)
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      
+      if (!apiKey) {
+        throw new Error('API key not configured')
+      }
+
+      const prompt = `Write a compelling, professional product description for a sneaker listing on a marketplace. 
+
+Sneaker Details:
+- Name: ${formData.name}
+- Brand: ${formData.brand}
+- Size: ${formData.size || 'Not specified'}
+- Color: ${formData.color || 'Not specified'}
+- Condition: ${formData.condition}
+- Price: $${formData.price || 'Not specified'}
+
+Write a concise, engaging description (2-3 sentences) that:
+1. Highlights the key features and appeal of this sneaker
+2. Mentions the condition and what makes it a great purchase
+3. Uses professional, enthusiastic language suitable for a premium marketplace
+4. Keeps it under 100 words
+
+Do not include any markdown formatting, asterisks, or special characters. Write in plain text only.`
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to generate description')
+      }
+
+      const data = await response.json()
+      const aiDescription = data.candidates?.[0]?.content?.parts?.[0]?.text
+      
+      if (!aiDescription) {
+        throw new Error('No description generated')
+      }
+      
+      setFormData({ ...formData, description: aiDescription.trim() })
+      toast.success('AI DESCRIPTION GENERATED!')
+    } catch (error) {
+      console.error('AI Generation error:', error)
+      toast.error('FAILED TO GENERATE DESCRIPTION')
+    } finally {
+      setGeneratingAI(false)
+    }
   }
 
   return (
@@ -197,7 +266,17 @@ const CreateSneaker = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase tracking-wider text-black mb-3">DESCRIPTION *</label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-bold uppercase tracking-wider text-black">DESCRIPTION *</label>
+                <button
+                  type="button"
+                  onClick={generateAIDescription}
+                  disabled={generatingAI}
+                  className="px-4 py-2 bg-white border-2 border-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all disabled:opacity-50"
+                >
+                  {generatingAI ? 'GENERATING...' : 'GENERATE WITH AI'}
+                </button>
+              </div>
               <textarea
                 required
                 value={formData.description}

@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import { useCurrency } from '../context/CurrencyContext'
+import { useCart } from '../context/CartContext'
 import { Heart, ShoppingCart, Star, MapPin, Phone, X, MessageSquare } from 'lucide-react'
 
 const SneakerDetails = () => {
   const { id } = useParams()
   const { user, token } = useAuth()
   const navigate = useNavigate()
-  const toast = useToast()
+  const { showToast } = useToast()
+  const { formatPrice } = useCurrency()
+  const { addToCart } = useCart()
   const [sneaker, setSneaker] = useState(null)
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -18,6 +22,8 @@ const SneakerDetails = () => {
   const [orderData, setOrderData] = useState({ shippingAddress: '', phoneNumber: '' })
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' })
   const [userHasReviewed, setUserHasReviewed] = useState(false)
+  const [aiInfo, setAiInfo] = useState('')
+  const [loadingAI, setLoadingAI] = useState(false)
 
   useEffect(() => {
     fetchSneakerDetails()
@@ -26,7 +32,7 @@ const SneakerDetails = () => {
 
   const fetchSneakerDetails = async () => {
     try {
-      const response = await axios.get(`/api/sneakers/${id}`)
+      const response = await axios.get(`/sneakers/${id}`)
       setSneaker(response.data)
     } catch (error) {
       console.error('Failed to fetch sneaker:', error)
@@ -37,7 +43,7 @@ const SneakerDetails = () => {
 
   const fetchReviews = async () => {
     try {
-      const response = await axios.get(`/api/reviews/sneaker/${id}`)
+      const response = await axios.get(`/reviews/sneaker/${id}`)
       setReviews(response.data)
       if (user) {
         const hasReviewed = response.data.some(review => review.username === user.username)
@@ -55,12 +61,12 @@ const SneakerDetails = () => {
     }
     try {
       const sneakerId = parseInt(id)
-      await axios.post(`/api/favorites/${sneakerId}`)
+      await axios.post(`/favorites/${sneakerId}`)
       setIsFavorite(true)
-      toast.success('ADDED TO FAVORITES!')
+      showToast('Added to favorites!', 'success')
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'FAILED TO ADD TO FAVORITES'
-      toast.error(errorMsg)
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to add to favorites'
+      showToast(errorMsg, 'error')
     }
   }
 
@@ -71,13 +77,13 @@ const SneakerDetails = () => {
       return
     }
     try {
-      await axios.post('/api/orders', { sneakerId: id, ...orderData })
-      toast.success('ORDER PLACED SUCCESSFULLY!')
+      await axios.post('/orders', { sneakerId: id, ...orderData })
+      showToast('Order placed successfully!', 'success')
       setShowOrderForm(false)
       setTimeout(() => navigate('/my-orders'), 1000)
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'FAILED TO PLACE ORDER'
-      toast.error(errorMsg)
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to place order'
+      showToast(errorMsg, 'error')
     }
   }
 
@@ -93,15 +99,79 @@ const SneakerDetails = () => {
         rating: reviewData.rating, 
         comment: reviewData.comment 
       }
-      await axios.post('/api/reviews', payload)
-      toast.success('REVIEW SUBMITTED SUCCESSFULLY!')
+      await axios.post('/reviews', payload)
+      showToast('Review submitted successfully!', 'success')
       setReviewData({ rating: 5, comment: '' })
       setUserHasReviewed(true)
       fetchReviews()
       fetchSneakerDetails()
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'FAILED TO SUBMIT REVIEW'
-      toast.error(errorMsg)
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to submit review'
+      showToast(errorMsg, 'error')
+    }
+  }
+
+  const handleAIInfo = async () => {
+    setLoadingAI(true)
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      
+      if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+        throw new Error('Please configure your Gemini API key in the .env file. Get one from: https://makersuite.google.com/app/apikey')
+      }
+
+      const prompt = `Provide detailed information about the sneaker: "${sneaker.name}" by ${sneaker.brand}. 
+      
+Description: ${sneaker.description}
+
+Please provide:
+1. Historical background and release information
+2. Key features and technology
+3. Cultural significance and popularity
+4. Style tips and outfit recommendations
+5. Value and collectibility insights
+
+Keep the response informative, engaging, and under 300 words.`
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
+          })
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('API Error:', errorData)
+        throw new Error(errorData.error?.message || 'API request failed')
+      }
+
+      const data = await response.json()
+      console.log('API Response:', data)
+      
+      const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text
+      
+      if (!aiText) {
+        throw new Error('No content in response')
+      }
+      
+      setAiInfo(aiText)
+      showToast('AI insights generated!', 'success')
+    } catch (error) {
+      console.error('AI Info error:', error)
+      const errorMessage = error.message || 'Failed to generate AI insights'
+      setAiInfo(`⚠️ ${errorMessage}\n\nTo enable AI features:\n1. Get a free API key from https://makersuite.google.com/app/apikey\n2. Add it to your .env file as VITE_GEMINI_API_KEY\n3. Restart the development server`)
+      showToast(errorMessage, 'error')
+    } finally {
+      setLoadingAI(false)
     }
   }
 
@@ -132,10 +202,10 @@ const SneakerDetails = () => {
   const isOwnListing = user && sneaker.seller?.username === user.username
 
   return (
-    <div className="min-h-screen bg-white py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white py-8 lg:py-16">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <div className="card overflow-hidden animate-slideUp">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 p-6 lg:p-12">
             {/* Image Gallery */}
             <div className="space-y-4">
               <div className="aspect-square bg-gray-100 rounded-3xl overflow-hidden border-2 border-black">
@@ -158,25 +228,11 @@ const SneakerDetails = () => {
 
             {/* Details */}
             <div>
-              <div className="flex items-start justify-between mb-6">
+              {/* Header with Brand and Favorite */}
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-2">{sneaker.brand}</p>
-                  <h1 className="text-display text-5xl font-bold mb-4 break-words uppercase">{sneaker.name}</h1>
-                  {sneaker.averageRating > 0 && (
-                    <div className="flex items-center space-x-3">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-6 w-6 ${i < sneaker.averageRating ? 'text-black fill-black' : 'text-gray-300'}`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm uppercase tracking-wider font-semibold text-gray-600">
-                        ({reviews.length} {reviews.length === 1 ? 'REVIEW' : 'REVIEWS'})
-                      </span>
-                    </div>
-                  )}
+                  <h1 className="text-display text-4xl lg:text-5xl font-bold break-words uppercase leading-tight">{sneaker.name}</h1>
                 </div>
                 <button 
                   onClick={handleAddToFavorites} 
@@ -187,34 +243,96 @@ const SneakerDetails = () => {
                 </button>
               </div>
 
-              <div className="mb-10">
-                <p className="text-6xl font-bold mb-8">
-                  ${sneaker.price}
+              {/* Price */}
+              <div className="mb-8">
+                <p className="text-5xl lg:text-6xl font-bold">
+                  {formatPrice(sneaker.price)}
                 </p>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">SIZE</p>
-                    <p className="font-bold text-3xl">{sneaker.size}</p>
+              </div>
+
+              {/* Product Specs Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-white border-2 border-black p-5 rounded-3xl">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">SIZE</p>
+                  <p className="font-bold text-3xl">{sneaker.size}</p>
+                </div>
+                <div className="bg-white border-2 border-black p-5 rounded-3xl">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">CONDITION</p>
+                  <p className="font-bold text-2xl uppercase">{sneaker.condition}</p>
+                </div>
+                <div className="bg-white border-2 border-black p-5 rounded-3xl">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">COLOR</p>
+                  <p className="font-bold text-lg uppercase break-words">{sneaker.color}</p>
+                </div>
+                <div className="bg-white border-2 border-black p-5 rounded-3xl">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">STOCK</p>
+                  <p className="font-bold text-3xl">{sneaker.stock}</p>
+                </div>
+              </div>
+
+              {/* Seller Information */}
+              <div className="mb-8 bg-white border-2 border-black rounded-3xl p-6">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-4">SELLER INFORMATION</h3>
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                    {sneaker.seller?.username?.charAt(0).toUpperCase()}
                   </div>
-                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">CONDITION</p>
-                    <p className="font-bold text-3xl uppercase">{sneaker.condition}</p>
-                  </div>
-                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">COLOR</p>
-                    <p className="font-bold text-xl uppercase break-words">{sneaker.color}</p>
-                  </div>
-                  <div className="bg-white border-2 border-black p-6 rounded-3xl">
-                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">STOCK</p>
-                    <p className="font-bold text-3xl">{sneaker.stock}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-lg uppercase">{sneaker.seller?.username}</p>
+                    <p className="text-xs text-gray-600 uppercase tracking-wider">VERIFIED SELLER</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-10">
-                <h3 className="text-display text-2xl font-bold mb-4 uppercase">DESCRIPTION</h3>
-                <p className="text-gray-700 leading-relaxed break-words">{sneaker.description}</p>
+              {/* Description */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">DESCRIPTION</h3>
+                  <button
+                    onClick={handleAIInfo}
+                    disabled={loadingAI}
+                    className="px-4 py-2 bg-white border-2 border-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all disabled:opacity-50"
+                  >
+                    {loadingAI ? 'LOADING...' : 'AI INFO'}
+                  </button>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed break-words">{sneaker.description}</p>
+                
+                {aiInfo && (
+                  <div className="mt-6 bg-white border-2 border-black rounded-3xl p-6 animate-slideUp">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-4 pb-3 border-b-2 border-black">
+                      AI INSIGHTS
+                    </h4>
+                    <div className="text-gray-800 leading-relaxed space-y-3">
+                      {aiInfo.split('\n\n').map((paragraph, idx) => (
+                        <p key={idx} className="text-sm leading-relaxed">
+                          {paragraph.replace(/\*\*/g, '').replace(/\*/g, '')}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Reviews Summary */}
+              {sneaker.averageRating > 0 && (
+                <div className="mb-8 bg-white border-2 border-black rounded-3xl p-6">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-4">CUSTOMER RATING</h3>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-6 w-6 ${i < sneaker.averageRating ? 'text-black fill-black' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold uppercase tracking-wider">
+                      {sneaker.averageRating.toFixed(1)} ({reviews.length} {reviews.length === 1 ? 'REVIEW' : 'REVIEWS'})
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {isOwnListing ? (
                 <div className="bg-white border-2 border-black rounded-3xl p-6 text-center">
@@ -222,13 +340,24 @@ const SneakerDetails = () => {
                   <p className="text-gray-600 mt-2 text-sm uppercase tracking-wider">YOU CANNOT PURCHASE YOUR OWN SNEAKERS</p>
                 </div>
               ) : sneaker.status === 'AVAILABLE' ? (
-                <button
-                  onClick={() => setShowOrderForm(true)}
-                  className="w-full btn-primary flex items-center justify-center space-x-3"
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                  <span>BUY NOW</span>
-                </button>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => {
+                      addToCart(sneaker)
+                      showToast('Added to cart!', 'success')
+                    }}
+                    className="w-full btn-secondary flex items-center justify-center space-x-3"
+                  >
+                    <ShoppingCart className="h-6 w-6" />
+                    <span>ADD TO CART</span>
+                  </button>
+                  <button
+                    onClick={() => setShowOrderForm(true)}
+                    className="w-full btn-primary flex items-center justify-center space-x-3"
+                  >
+                    <span>BUY NOW</span>
+                  </button>
+                </div>
               ) : (
                 <div className="bg-gray-200 border-2 border-gray-800 rounded-3xl p-6 text-center">
                   <p className="font-bold text-sm uppercase tracking-wider">THIS SNEAKER IS NO LONGER AVAILABLE</p>
@@ -288,7 +417,7 @@ const SneakerDetails = () => {
           )}
 
           {/* Reviews Section */}
-          <div className="border-t-2 border-black p-8 lg:p-12">
+          <div className="border-t-2 border-black p-6 lg:p-12">
             <div className="flex items-center space-x-4 mb-8">
               <MessageSquare className="h-8 w-8 text-black" />
               <h2 className="text-display text-4xl font-bold uppercase">CUSTOMER REVIEWS</h2>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { Package, Clock, Truck, CheckCircle, XCircle, ShoppingBag } from 'lucide-react'
@@ -8,7 +8,7 @@ import { Package, Clock, Truck, CheckCircle, XCircle, ShoppingBag } from 'lucide
 const MyOrders = () => {
   const { token } = useAuth()
   const navigate = useNavigate()
-  const toast = useToast()
+  const { showToast } = useToast()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('active')
@@ -23,11 +23,11 @@ const MyOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('/api/orders/my-orders')
+      const response = await axios.get('/orders/my-orders')
       setOrders(response.data || [])
     } catch (error) {
       console.error('Failed to fetch orders:', error)
-      toast.error('FAILED TO LOAD ORDERS')
+      showToast('Failed to load orders', 'error')
       setOrders([])
     } finally {
       setLoading(false)

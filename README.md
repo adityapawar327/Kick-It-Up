@@ -13,12 +13,32 @@ A modern, full-stack sneaker marketplace built with Spring Boot and React, featu
 ### 🛍️ Marketplace Features
 - **Browse & Search** - Explore sneakers with advanced filtering by brand, condition, and search
 - **Image Upload** - Upload images directly from your PC or use URLs (Base64 support)
+- **Shopping Cart** - Full cart functionality with add/remove items and quantity management
 - **Buy & Sell** - Complete marketplace with secure transactions
 - **Order Management** - Track orders with real-time status updates (Pending → Shipped → Delivered)
 - **Reviews & Ratings** - Community-driven 5-star rating system
 - **Favorites** - Save sneakers to your wishlist
 - **Seller Dashboard** - Comprehensive analytics and order management
 - **My Listings** - Manage your sneaker inventory with edit/delete capabilities
+
+### 🤖 AI-Powered Features (Google Gemini)
+- **AI Product Descriptions** - Generate compelling product descriptions automatically
+- **AI Insights** - Get intelligent product recommendations and insights
+- **Smart Content Generation** - AI-powered product information and suggestions
+- **Natural Language Processing** - Advanced text generation for listings
+
+### 💰 Currency & Payment
+- **Multi-Currency Support** - Toggle between USD and INR
+- **Real-time Exchange Rates** - Automatic currency conversion
+- **Persistent Currency Preference** - Saves your currency choice
+- **Multiple Payment Methods** - Cash on Delivery, UPI, Credit/Debit Card, Net Banking
+
+### 👤 Enhanced User Profiles
+- **Profile Image Upload** - Upload custom profile pictures (Base64, max 5MB)
+- **Seller Mode Toggle** - Enable/disable seller capabilities with one click
+- **About Me Section** - Add personal bio and description
+- **Profile Customization** - Full control over your profile appearance
+- **Seller Badge** - Visual indicator for active sellers
 
 ### 🎨 Design & UX
 - **HOODIE Theme** - Bold black and white minimalist aesthetic
@@ -27,6 +47,14 @@ A modern, full-stack sneaker marketplace built with Spring Boot and React, featu
 - **Responsive Design** - Optimized for desktop, tablet, and mobile
 - **Custom Dialogs** - Themed confirmation dialogs and toast notifications
 - **About Us Page** - Company information, values, and team details
+- **Image Hover Effects** - Auto-sliding image gallery with depth effects
+
+### 🛒 Advanced Shopping Experience
+- **Enhanced Checkout** - Comprehensive checkout flow with receiver details
+- **GPS Location** - Auto-fill shipping address using geolocation
+- **Order Tracking** - Real-time order status updates
+- **Cart Persistence** - Cart items saved across sessions
+- **Quantity Management** - Adjust quantities directly in cart
 
 ### 🔒 Security & Authentication
 - **JWT Authentication** - Secure token-based authentication
@@ -60,42 +88,25 @@ cd Kick-It-Up
 
 #### 2. Setup Database
 
-**Using MySQL:**
-```bash
-mysql -u root -p
-CREATE DATABASE sneaker_store;
-exit;
-
-# Run schema
-mysql -u root -p sneaker_store < backend/src/main/resources/schema.sql
-
-# Load sample data (optional)
-mysql -u root -p sneaker_store < backend/src/main/resources/data.sql
-```
-
-**Using XAMPP:**
+**Using XAMPP (Recommended):**
 - Start XAMPP MySQL service
-- Open phpMyAdmin (http://localhost/phpmyadmin)
-- Create database `sneaker_store`
-- Import `backend/src/main/resources/schema.sql`
-- Import `backend/src/main/resources/data.sql` (optional)
+- That's it! The application will automatically create the database and tables on first run
 
-**For Image Upload Support:**
-```bash
-cd backend
-run-migration.bat
-```
-This updates the database to support Base64 image storage.
+**Using MySQL:**
+- Just ensure MySQL is running on port 3306
+- The application will automatically create the database and tables on first run
 
-#### 3. Configure Backend
+**Note:** The database schema is managed automatically by Hibernate. Your data is preserved across restarts.
 
-Edit `backend/src/main/resources/application.properties`:
+#### 3. Configure Backend (Optional)
+
+If you need to change database credentials, edit `backend/src/main/resources/application.properties`:
 ```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/sneaker_store
 spring.datasource.username=root
 spring.datasource.password=YOUR_PASSWORD
-jwt.secret=YOUR_SECRET_KEY_CHANGE_THIS
 ```
+
+**Note:** Default configuration works with XAMPP out of the box.
 
 #### 4. Start Backend
 ```bash
@@ -124,12 +135,12 @@ npm install
 npm run dev
 ```
 
-Frontend will start on: http://localhost:5173
+Frontend will start on: http://localhost:3000
 
 #### 6. Access Application
-- **Frontend**: http://localhost:5173
+- **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080
-- **Default Credentials**: Register a new account or use sample data
+- **First Time**: Register a new account to get started
 
 ## 📁 Project Structure
 
@@ -240,12 +251,13 @@ jwt.expiration=86400000
 server.port=8080
 
 # CORS Configuration (for production)
-cors.allowed.origins=http://localhost:5173,https://your-frontend-url.vercel.app
+cors.allowed.origins=http://localhost:3000,https://your-frontend-url.vercel.app
 ```
 
 ### Frontend (`.env`)
 ```env
-VITE_API_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8000
+VITE_GEMINI_API_KEY=your_google_gemini_api_key_here
 ```
 
 ## 📝 API Documentation
@@ -386,17 +398,17 @@ Use the included `test-auth.http` file with REST Client extension in VS Code.
 ### Common Issues
 
 **Database Connection Failed**
-- Ensure MySQL is running
+- Ensure MySQL is running (start XAMPP)
 - Check credentials in `application.properties`
-- Verify database `sneaker_store` exists
+- Database will be created automatically on first run
 
 **CORS Errors**
 - Update `cors.allowed.origins` in `application.properties`
 - Restart backend server
 
 **Image Upload Not Working**
-- Run migration script: `backend/run-migration.bat`
-- Ensure database column is `MEDIUMTEXT`
+- Ensure the uploads directory exists
+- Check file size limits in application.properties
 
 **Hibernate Proxy Error**
 - Already fixed with Jackson annotations

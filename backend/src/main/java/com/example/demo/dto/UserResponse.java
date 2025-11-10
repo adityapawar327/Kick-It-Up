@@ -10,6 +10,9 @@ public class UserResponse {
     private String fullName;
     private String phoneNumber;
     private String address;
+    private String profileImage;
+    private Boolean isSeller;
+    private String aboutMe;
     private LocalDateTime createdAt;
 
     public UserResponse() {}
@@ -21,6 +24,9 @@ public class UserResponse {
         this.fullName = user.getFullName();
         this.phoneNumber = user.getPhoneNumber();
         this.address = user.getAddress();
+        this.profileImage = user.getProfileImage();
+        this.isSeller = user.getIsSeller();
+        this.aboutMe = user.getAboutMe();
         this.createdAt = user.getCreatedAt();
     }
 
@@ -42,6 +48,15 @@ public class UserResponse {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getProfileImage() { return profileImage; }
+    public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+
+    public Boolean getIsSeller() { return isSeller; }
+    public void setIsSeller(Boolean isSeller) { this.isSeller = isSeller; }
+
+    public String getAboutMe() { return aboutMe; }
+    public void setAboutMe(String aboutMe) { this.aboutMe = aboutMe; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -1,39 +1,111 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { User, Mail, Phone, MapPin, Lock } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Lock, Camera, Store, FileText } from 'lucide-react'
 
 const Profile = () => {
-  const { user, token } = useAuth()
+  const { user: authUser, token } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
+  const fileInputRef = useRef(null)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [formData, setFormData] = useState({
-    fullName: user?.fullName || '',
-    phoneNumber: user?.phoneNumber || '',
-    address: user?.address || ''
+    fullName: '',
+    phoneNumber: '',
+    address: '',
+    profileImage: '',
+    isSeller: false,
+    aboutMe: ''
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: ''
   })
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [imagePreview, setImagePreview] = useState('')
 
   if (!token) {
     navigate('/login')
     return null
   }
 
+  // Fetch full user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get('/users/profile')
+        const userData = response.data
+        setUser(userData)
+        setFormData({
+          fullName: userData.fullName || '',
+          phoneNumber: userData.phoneNumber || '',
+          address: userData.address || '',
+          profileImage: userData.profileImage || '',
+          isSeller: userData.isSeller || false,
+          aboutMe: userData.aboutMe || ''
+        })
+        setImagePreview(userData.profileImage || '')
+        setLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+        toast.error('FAILED TO LOAD PROFILE')
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-black mx-auto mb-4"></div>
+          <p className="text-sm font-bold uppercase tracking-wider">LOADING PROFILE...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('IMAGE SIZE MUST BE LESS THAN 5MB')
+        return
+      }
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result
+        setImagePreview(base64String)
+        setFormData({ ...formData, profileImage: base64String })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault()
     try {
-      await axios.put('/api/users/profile', formData)
+      const response = await axios.put('/users/profile', formData)
+      const userData = response.data
+      setUser(userData)
+      setFormData({
+        fullName: userData.fullName || '',
+        phoneNumber: userData.phoneNumber || '',
+        address: userData.address || '',
+        profileImage: userData.profileImage || '',
+        isSeller: userData.isSeller || false,
+        aboutMe: userData.aboutMe || ''
+      })
+      setImagePreview(userData.profileImage || '')
       toast.success('PROFILE UPDATED SUCCESSFULLY!')
       setEditing(false)
-      window.location.reload()
     } catch (error) {
+      console.error('Update error:', error)
       toast.error('FAILED TO UPDATE PROFILE')
     }
   }
@@ -41,7 +113,7 @@ const Profile = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('/api/users/change-password', passwordData)
+      await axios.post('/users/change-password', passwordData)
       toast.success('PASSWORD CHANGED SUCCESSFULLY!')
       setPasswordData({ currentPassword: '', newPassword: '' })
       setShowPasswordForm(false)
@@ -62,12 +134,42 @@ const Profile = () => {
 
         <div className="card p-8 mb-8">
           <div className="flex items-center space-x-6 mb-12 pb-8 border-b-2 border-black">
-            <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="h-12 w-12 text-white" />
+            <div className="relative">
+              <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {imagePreview || user?.profileImage ? (
+                  <img src={imagePreview || user?.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-12 w-12 text-white" />
+                )}
+              </div>
+              {editing && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-black text-white rounded-full p-2 hover:bg-gray-800 transition-colors"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </>
+              )}
             </div>
-            <div>
+            <div className="flex-1">
               <h2 className="text-display text-4xl font-bold mb-2">{user?.fullName}</h2>
-              <p className="text-sm uppercase tracking-wider font-semibold text-gray-600">@{user?.username}</p>
+              <p className="text-sm uppercase tracking-wider font-semibold text-gray-600 mb-2">@{user?.username}</p>
+              {user?.isSeller && (
+                <div className="inline-flex items-center space-x-2 bg-black text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  <Store className="h-3 w-3" />
+                  <span>SELLER</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -114,9 +216,35 @@ const Profile = () => {
                     placeholder="ENTER YOUR ADDRESS"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold uppercase tracking-wider text-black mb-3">ABOUT ME</label>
+                  <textarea
+                    value={formData.aboutMe}
+                    onChange={(e) => setFormData({ ...formData, aboutMe: e.target.value })}
+                    className="w-full px-6 py-4 bg-white border-2 border-black rounded-3xl focus:outline-none focus:ring-0 transition-all duration-300 text-sm font-medium"
+                    rows="4"
+                    placeholder="TELL US ABOUT YOURSELF"
+                  />
+                </div>
+                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-2xl">
+                  <Store className="h-6 w-6 text-black flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-bold uppercase tracking-wider text-black mb-1">SELLER MODE</p>
+                    <p className="text-xs text-gray-600">Enable this to list and sell sneakers</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isSeller}
+                      onChange={(e) => setFormData({ ...formData, isSeller: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-14 h-8 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-black"></div>
+                  </label>
+                </div>
                 <div className="flex space-x-4">
                   <button type="submit" className="btn-primary">SAVE CHANGES</button>
-                  <button type="button" onClick={() => setEditing(false)} className="btn-secondary">CANCEL</button>
+                  <button type="button" onClick={() => { setEditing(false); setImagePreview(user?.profileImage || '') }} className="btn-secondary">CANCEL</button>
                 </div>
               </form>
             ) : (
@@ -140,6 +268,22 @@ const Profile = () => {
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">ADDRESS</p>
                     <p className="font-semibold">{user?.address || 'NOT SET'}</p>
+                  </div>
+                </div>
+                {user?.aboutMe && (
+                  <div className="flex items-start space-x-4 pt-4 border-t-2 border-gray-100">
+                    <FileText className="h-6 w-6 text-black flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-2">ABOUT ME</p>
+                      <p className="font-medium text-gray-700 leading-relaxed">{user?.aboutMe}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center space-x-4 pt-4 border-t-2 border-gray-100">
+                  <Store className="h-6 w-6 text-black flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">SELLER STATUS</p>
+                    <p className="font-semibold">{user?.isSeller ? 'ACTIVE SELLER' : 'BUYER ONLY'}</p>
                   </div>
                 </div>
               </div>

@@ -75,11 +75,17 @@ public class OrderService {
     }
 
     public Order getOrderById(Long id) {
+        if (id == null) {
+            throw new RuntimeException("Order ID cannot be null");
+        }
         return orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 
     public Order updateOrderStatus(Long id, Order.OrderStatus status) {
+        if (id == null) {
+            throw new RuntimeException("Order ID cannot be null");
+        }
         Order order = getOrderById(id);
         order.setStatus(status);
         return orderRepository.save(order);

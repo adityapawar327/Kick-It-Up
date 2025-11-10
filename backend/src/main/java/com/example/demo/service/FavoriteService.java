@@ -27,6 +27,9 @@ public class FavoriteService {
 
     @Transactional
     public Favorite addToFavorites(Long sneakerId) {
+        if (sneakerId == null) {
+            throw new RuntimeException("Sneaker ID cannot be null");
+        }
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -67,6 +70,9 @@ public class FavoriteService {
 
     @Transactional
     public void removeFromFavorites(Long sneakerId) {
+        if (sneakerId == null) {
+            throw new RuntimeException("Sneaker ID cannot be null");
+        }
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -79,6 +85,9 @@ public class FavoriteService {
 
     @Transactional(readOnly = true)
     public boolean isFavorite(Long sneakerId) {
+        if (sneakerId == null) {
+            return false;
+        }
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

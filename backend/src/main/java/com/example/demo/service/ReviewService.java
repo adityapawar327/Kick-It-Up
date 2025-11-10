@@ -25,12 +25,17 @@ public class ReviewService {
     @Autowired
     private UserRepository userRepository;
 
+    @SuppressWarnings("null")
     public Review createReview(ReviewRequest request) {
+        if (request.getSneakerId() == null) {
+            throw new RuntimeException("Sneaker ID cannot be null");
+        }
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Sneaker sneaker = sneakerRepository.findById(request.getSneakerId())
+        Long sneakerId = request.getSneakerId();
+        Sneaker sneaker = sneakerRepository.findById(sneakerId)
                 .orElseThrow(() -> new RuntimeException("Sneaker not found"));
 
         if (reviewRepository.findBySneakerAndUser(sneaker, user).isPresent()) {
@@ -48,6 +53,9 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public List<com.example.demo.dto.ReviewResponse> getReviewsBySneaker(Long sneakerId) {
+        if (sneakerId == null) {
+            throw new RuntimeException("Sneaker ID cannot be null");
+        }
         Sneaker sneaker = sneakerRepository.findById(sneakerId)
                 .orElseThrow(() -> new RuntimeException("Sneaker not found"));
         List<Review> reviews = reviewRepository.findBySneakerWithUser(sneaker);
@@ -64,6 +72,9 @@ public class ReviewService {
     }
 
     public void deleteReview(Long id) {
+        if (id == null) {
+            throw new RuntimeException("Review ID cannot be null");
+        }
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Review not found"));
 

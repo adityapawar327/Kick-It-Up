@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { TrendingUp, Package, DollarSign, ShoppingBag } from 'lucide-react'
@@ -24,8 +24,8 @@ const Dashboard = () => {
   const fetchDashboard = async () => {
     try {
       const [statsRes, ordersRes] = await Promise.all([
-        axios.get('/api/dashboard/seller/stats'),
-        axios.get('/api/dashboard/seller/orders')
+        axios.get('/dashboard/seller/stats'),
+        axios.get('/dashboard/seller/orders')
       ])
       setStats(statsRes.data)
       setOrders(ordersRes.data)
@@ -39,7 +39,7 @@ const Dashboard = () => {
 
   const updateOrderStatus = async (orderId, status) => {
     try {
-      await axios.patch(`/api/orders/${orderId}/status?status=${status}`)
+      await axios.patch(`/orders/${orderId}/status?status=${status}`)
       fetchDashboard()
       toast.success('ORDER STATUS UPDATED!')
     } catch (error) {

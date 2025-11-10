@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
     @Autowired
     private AuthService authService;
@@ -31,6 +30,16 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid username or password"));
+        }
+    }
+
+    @PostMapping("/guest")
+    public ResponseEntity<?> guestLogin() {
+        try {
+            AuthResponse response = authService.createGuestToken();
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Failed to create guest session"));
         }
     }
 }

@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/sneakers")
-@CrossOrigin(origins = "*")
 public class SneakerController {
     @Autowired
     private SneakerService sneakerService;

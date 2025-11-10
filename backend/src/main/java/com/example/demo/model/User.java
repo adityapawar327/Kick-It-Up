@@ -29,6 +29,15 @@ public class User {
     private String phoneNumber;
     private String address;
 
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String profileImage;
+
+    @Column(nullable = false)
+    private Boolean isSeller = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String aboutMe;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "roles")
@@ -74,4 +83,13 @@ public class User {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getProfileImage() { return profileImage; }
+    public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+
+    public Boolean getIsSeller() { return isSeller; }
+    public void setIsSeller(Boolean isSeller) { this.isSeller = isSeller; }
+
+    public String getAboutMe() { return aboutMe; }
+    public void setAboutMe(String aboutMe) { this.aboutMe = aboutMe; }
 }

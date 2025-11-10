@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**", 
                                 "/api/sneakers/search/**", 
                                 "/api/sneakers/all",
+                                "/api/sneakers/available",
                                 "/api/sneakers/{id}",
                                 "/api/reviews/sneaker/**",
                                 "/api/users/{id}").permitAll()

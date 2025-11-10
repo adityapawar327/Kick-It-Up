@@ -1,15 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Menu, X, User } from 'lucide-react'
+import { useCurrency } from '../context/CurrencyContext'
+import { useCart } from '../context/CartContext'
+import { Menu, X, User, ShoppingCart } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
+  const { currency, toggleCurrency } = useCurrency()
+  const { getCartCount } = useCart()
   const navigate = useNavigate()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const userMenuRef = useRef(null)
+  const cartCount = getCartCount()
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -51,11 +56,11 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <h1 className="text-display text-5xl font-bold tracking-wider">KICK IT UP</h1>
+            <h1 className="text-display text-4xl lg:text-5xl font-bold tracking-wider">KICK IT UP</h1>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
             {user ? (
               <>
                 <NavLink to="/">HOME</NavLink>
@@ -63,6 +68,14 @@ const Navbar = () => {
                 <NavLink to="/favorites">FAVORITES</NavLink>
                 <NavLink to="/my-orders">ORDERS</NavLink>
                 <NavLink to="/my-listings">MY LISTINGS</NavLink>
+                <Link to="/cart" className="relative px-4 py-2 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider transition-all bg-white text-black hover:bg-gray-100">
+                  <ShoppingCart className="h-5 w-5 inline" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-black text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/create-sneaker" className="btn-primary">
                   SELL
                 </Link>
@@ -82,6 +95,16 @@ const Navbar = () => {
                         <p className="font-bold text-sm uppercase tracking-wider">{user.username}</p>
                         <p className="text-xs text-gray-600 mt-1">{user.email}</p>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleCurrency()
+                        }}
+                        className="w-full text-left px-6 py-3 hover:bg-gray-100 transition-all font-semibold text-sm uppercase tracking-wider flex items-center justify-between"
+                      >
+                        <span>CURRENCY</span>
+                        <span className="font-bold">{currency}</span>
+                      </button>
                       <Link
                         to="/profile"
                         className="block px-6 py-3 hover:bg-gray-100 transition-all font-semibold text-sm uppercase tracking-wider"
@@ -134,6 +157,12 @@ const Navbar = () => {
                   <p className="font-bold text-sm uppercase tracking-wider">{user.username}</p>
                   <p className="text-xs text-gray-600 mt-1">{user.email}</p>
                 </div>
+                <button
+                  onClick={toggleCurrency}
+                  className="block w-full text-left px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all"
+                >
+                  CURRENCY: {currency}
+                </button>
                 <Link to="/" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
                   HOME
                 </Link>
@@ -167,6 +196,12 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="space-y-3">
+                <button
+                  onClick={toggleCurrency}
+                  className="block w-full text-left px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all"
+                >
+                  CURRENCY: {currency}
+                </button>
                 <Link to="/" className="block px-4 py-3 rounded-full border-2 border-black font-semibold uppercase text-sm tracking-wider hover:bg-gray-100 transition-all">
                   HOME
                 </Link>

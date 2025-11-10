@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -27,7 +27,7 @@ const MyListings = () => {
 
   const fetchMySneakers = async () => {
     try {
-      const response = await axios.get('/api/sneakers/my-sneakers')
+      const response = await axios.get('/sneakers/my-sneakers')
       setSneakers(response.data)
     } catch (error) {
       console.error('Failed to fetch sneakers:', error)
@@ -86,7 +86,7 @@ const MyListings = () => {
         imageUrls: allImages
       }
 
-      await axios.put(`/api/sneakers/${editingSneaker.id}`, updatedData)
+      await axios.put(`/sneakers/${editingSneaker.id}`, updatedData)
       toast.success('SNEAKER UPDATED SUCCESSFULLY!')
       setEditingSneaker(null)
       setUploadedImages([])
@@ -103,7 +103,7 @@ const MyListings = () => {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/sneakers/${deleteConfirm}`)
+      await axios.delete(`/sneakers/${deleteConfirm}`)
       toast.success('SNEAKER DELETED SUCCESSFULLY!')
       setDeleteConfirm(null)
       fetchMySneakers()

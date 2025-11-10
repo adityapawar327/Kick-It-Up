@@ -38,7 +38,7 @@ public class Sneaker {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "sneaker_images", joinColumns = @JoinColumn(name = "sneaker_id"))
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "MEDIUMTEXT")
     private List<String> imageUrls = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
+import { CurrencyProvider } from './context/CurrencyContext'
+import { CartProvider } from './context/CartContext'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -13,30 +15,38 @@ import MyOrders from './pages/MyOrders'
 import MyListings from './pages/MyListings'
 import Profile from './pages/Profile'
 import AboutUs from './pages/AboutUs'
+import TestPage from './pages/TestPage'
+import Cart from './pages/Cart'
 
 function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <div className="min-h-screen">
-            <Navbar />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/sneaker/:id" element={<SneakerDetails />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/create-sneaker" element={<CreateSneaker />} />
-              <Route path="/favorites" element={<Favorites />} />
-              <Route path="/my-orders" element={<MyOrders />} />
-              <Route path="/my-listings" element={<MyListings />} />
-              <Route path="/profile" element={<Profile />} />
-            </Routes>
-          </div>
-        </Router>
-      </ToastProvider>
+      <CurrencyProvider>
+        <CartProvider>
+          <ToastProvider>
+            <Router>
+              <div className="min-h-screen">
+                <Navbar />
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/about" element={<AboutUs />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/sneaker/:id" element={<SneakerDetails />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/create-sneaker" element={<CreateSneaker />} />
+                  <Route path="/favorites" element={<Favorites />} />
+                  <Route path="/my-orders" element={<MyOrders />} />
+                  <Route path="/my-listings" element={<MyListings />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/test" element={<TestPage />} />
+                </Routes>
+              </div>
+            </Router>
+          </ToastProvider>
+        </CartProvider>
+      </CurrencyProvider>
     </AuthProvider>
   )
 }

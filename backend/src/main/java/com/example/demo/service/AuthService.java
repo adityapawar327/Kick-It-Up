@@ -62,4 +62,17 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getUsername());
         return new AuthResponse(token, user.getUsername(), user.getEmail());
     }
+
+    public AuthResponse createGuestToken() {
+        // Use dedicated guest user for browsing
+        User guestUser = userRepository.findByUsername("guest_user")
+                .orElseGet(() -> {
+                    // Fallback to admin if guest user doesn't exist
+                    return userRepository.findByUsername("admin")
+                            .orElseThrow(() -> new RuntimeException("Guest login not available"));
+                });
+        
+        String token = jwtUtil.generateToken(guestUser.getUsername());
+        return new AuthResponse(token, guestUser.getUsername(), guestUser.getEmail());
+    }
 }
