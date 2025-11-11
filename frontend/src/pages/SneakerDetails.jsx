@@ -56,15 +56,21 @@ const SneakerDetails = () => {
 
   const handleAddToFavorites = async () => {
     if (!token) {
+      console.log('No token found, redirecting to login')
+      showToast('Please login to add favorites', 'error')
       navigate('/login')
       return
     }
     try {
       const sneakerId = parseInt(id)
-      await axios.post(`/favorites/${sneakerId}`)
+      console.log('Adding to favorites:', { sneakerId, token: token ? 'exists' : 'missing' })
+      const response = await axios.post(`/favorites/${sneakerId}`)
+      console.log('Favorite added successfully:', response.data)
       setIsFavorite(true)
       showToast('Added to favorites!', 'success')
     } catch (error) {
+      console.error('Failed to add to favorites:', error)
+      console.error('Error response:', error.response?.data)
       const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to add to favorites'
       showToast(errorMsg, 'error')
     }
