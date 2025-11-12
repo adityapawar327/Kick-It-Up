@@ -20,6 +20,23 @@ A modern, full-stack sneaker marketplace built with Spring Boot and React, featu
 - **Favorites** - Save sneakers to your wishlist
 - **Seller Dashboard** - Comprehensive analytics and order management
 - **My Listings** - Manage your sneaker inventory with edit/delete capabilities
+- **Trade System** - Propose and manage sneaker trades with other users
+
+### 💬 Messaging System
+- **Real-time Messaging** - Chat with buyers and sellers instantly
+- **Media Messaging** - Send photos, videos, and audio messages
+  - Photo sharing (JPEG, PNG, GIF, WebP)
+  - Video sharing (MP4, WebM, OGG)
+  - Audio messages (MP3, WAV, OGG)
+  - File size limit: 10MB per file
+- **Unread Notifications** - Badge counters on navbar and conversation list
+- **Read Receipts** - Single check (✓) for sent, double check (✓✓) for read
+- **Message Alignment** - Your messages on right, theirs on left
+- **Conversation Management** - Search users, view conversation history
+- **Auto-refresh** - Real-time message polling (3-5 second intervals)
+- **Media Preview** - Preview files before sending
+- **Click to Enlarge** - Open images in new tab
+- **Inline Players** - Play videos and audio directly in chat
 
 ### 🤖 AI-Powered Features (Google Gemini)
 - **AI Product Descriptions** - Generate compelling product descriptions automatically
@@ -63,6 +80,17 @@ A modern, full-stack sneaker marketplace built with Spring Boot and React, featu
 - **CORS Configuration** - Secure cross-origin requests
 - **Input Validation** - Server-side and client-side validation
 - **Hibernate Proxy Fix** - Proper JSON serialization with Jackson annotations
+
+### 🛡️ Advanced Security Features
+- **XSS Prevention** - HTML tag stripping and script removal
+- **SQL Injection Protection** - Pattern detection and parameterized queries
+- **Rate Limiting** - 10 messages per minute to prevent spam
+- **Content Sanitization** - Remove dangerous characters and control codes
+- **File Validation** - Type and size checks for media uploads
+- **Secure Error Messages** - No sensitive data in client responses
+- **Comprehensive Logging** - Security event tracking and audit trails
+- **Database Indexes** - Optimized queries for performance
+- **Triple-check ID Comparison** - Reliable message ownership verification
 
 ### 📊 Dashboard & Analytics
 - **Seller Stats** - Total listings, active sneakers, orders, and revenue
@@ -161,7 +189,9 @@ Kick-It-Up/
 │   │   │   ├── Sneaker.java
 │   │   │   ├── Order.java
 │   │   │   ├── Review.java
-│   │   │   └── Favorite.java
+│   │   │   ├── Favorite.java
+│   │   │   ├── Message.java         # NEW: Messaging
+│   │   │   └── Trade.java           # NEW: Trade system
 │   │   ├── dto/                     # Data Transfer Objects
 │   │   ├── config/                  # Configuration
 │   │   │   ├── SecurityConfig.java
@@ -193,10 +223,17 @@ Kick-It-Up/
 │   │   │   ├── MyOrders.jsx
 │   │   │   ├── Favorites.jsx
 │   │   │   ├── Dashboard.jsx
-│   │   │   └── Profile.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── Cart.jsx
+│   │   │   ├── Checkout.jsx
+│   │   │   ├── Messages.jsx         # NEW: Messaging
+│   │   │   ├── TradeRequests.jsx    # NEW: Trade management
+│   │   │   └── ProposeTrade.jsx     # NEW: Trade proposal
 │   │   ├── context/                 # React Context
 │   │   │   ├── AuthContext.jsx
-│   │   │   └── ToastContext.jsx
+│   │   │   ├── ToastContext.jsx
+│   │   │   ├── CartContext.jsx      # NEW: Cart management
+│   │   │   └── CurrencyContext.jsx  # NEW: Currency switching
 │   │   ├── App.jsx
 │   │   ├── main.jsx
 │   │   └── index.css
@@ -267,6 +304,30 @@ VITE_GEMINI_API_KEY=your_google_gemini_api_key_here
 |--------|----------|-------------|---------------|
 | POST | `/api/auth/register` | Register new user | No |
 | POST | `/api/auth/login` | Login user | No |
+
+### User Endpoints
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/users/{id}` | Get user by ID | Yes |
+| GET | `/api/users/search?username={username}` | Search user by username | Yes |
+| GET | `/api/users/me` | Get current user | Yes |
+
+### Message Endpoints
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/messages/partners` | Get conversation partners | Yes |
+| GET | `/api/messages/conversation/{userId}` | Get conversation with user | Yes |
+| POST | `/api/messages` | Send message (text or media) | Yes |
+| PATCH | `/api/messages/{id}/read` | Mark message as read | Yes |
+| PATCH | `/api/messages/conversation/{userId}/read` | Mark conversation as read | Yes |
+| GET | `/api/messages/unread-count` | Get total unread count | Yes |
+
+### Trade Endpoints
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/trades/my-trades` | Get user's trades | Yes |
+| POST | `/api/trades` | Propose trade | Yes |
+| PATCH | `/api/trades/{id}/status` | Update trade status | Yes |
 
 ### Sneaker Endpoints
 | Method | Endpoint | Description | Auth Required |
@@ -384,11 +445,21 @@ FRONTEND_URL=https://your-app.vercel.app
 3. Browse sneakers
 4. Create a listing (with image upload)
 5. Add sneakers to favorites
-6. Place an order
-7. Leave a review
-8. Check dashboard statistics
-9. Update order status
-10. Edit/delete listings
+6. Add items to cart
+7. Complete checkout with receiver details
+8. Place an order
+9. Leave a review
+10. Check dashboard statistics
+11. Update order status
+12. Edit/delete listings
+13. Send text messages to sellers
+14. Send photos/videos/audio in messages
+15. Check unread message notifications
+16. Propose a trade
+17. Accept/reject trade requests
+18. Toggle currency (USD/INR)
+19. Update profile with image
+20. Enable seller mode
 
 ### API Testing
 Use the included `test-auth.http` file with REST Client extension in VS Code.
@@ -409,6 +480,17 @@ Use the included `test-auth.http` file with REST Client extension in VS Code.
 **Image Upload Not Working**
 - Ensure the uploads directory exists
 - Check file size limits in application.properties
+- For media messages, max size is 10MB
+
+**Messages Not Sending**
+- Check backend logs for rate limiting (10 msg/min)
+- Verify JWT token is valid
+- Check file size for media messages
+
+**Media Not Displaying**
+- Ensure Base64 encoding is correct
+- Check browser console for errors
+- Verify media URL is properly stored
 
 **Hibernate Proxy Error**
 - Already fixed with Jackson annotations
@@ -428,6 +510,11 @@ Use the included `test-auth.http` file with REST Client extension in VS Code.
 - **reviews** - Product reviews
 - **favorites** - User favorites
 - **user_roles** - User role assignments
+- **messages** - Chat messages with media support (NEW)
+  - Columns: id, sender_id, receiver_id, content, message_type, media_url, media_file_name, media_mime_type, media_size, is_read, created_at
+  - Indexes: sender_id, receiver_id, created_at, is_read, (sender_id, created_at)
+- **trades** - Sneaker trade proposals (NEW)
+  - Columns: id, proposer_id, receiver_id, offered_sneaker_id, requested_sneaker_id, status, created_at, updated_at
 
 ## 🤝 Contributing
 
@@ -460,7 +547,26 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Design inspired by modern streetwear and minimalist aesthetics
 - Built with industry-standard technologies
 - Community-driven development
+- Google Gemini AI for intelligent features
+- Lucide React for beautiful icons
 - Special thanks to all contributors
+
+## 🔐 Security Best Practices
+
+This application implements enterprise-grade security:
+
+- **Input Sanitization**: All user inputs are sanitized to prevent XSS attacks
+- **SQL Injection Prevention**: Parameterized queries and pattern detection
+- **Rate Limiting**: Prevents spam and abuse (10 messages/minute)
+- **JWT Tokens**: Secure, stateless authentication
+- **Password Hashing**: BCrypt with salt for password storage
+- **CORS Protection**: Configured allowed origins
+- **File Validation**: Type and size checks for uploads
+- **Error Handling**: Secure error messages without sensitive data
+- **Logging**: Comprehensive security event tracking
+- **Database Indexes**: Optimized for performance and security
+
+For more details, see `.env.security.md` and `SECURITY_IMPROVEMENTS.md`
 
 ## 📞 Support
 
