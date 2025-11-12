@@ -57,30 +57,70 @@ const Cart = () => {
   }
 
   const handlePlaceOrder = async () => {
-    if (!orderData.receiverName || !orderData.phoneNumber || !orderData.shippingAddress) {
-      showToast('Please fill all required fields', 'error')
+    // Validate all fields
+    if (!orderData.receiverName || orderData.receiverName.trim().length < 2) {
+      showToast('Please enter a valid receiver name', 'error')
+      return
+    }
+    
+    if (!orderData.phoneNumber || orderData.phoneNumber.trim().length < 10) {
+      showToast('Please enter a valid phone number', 'error')
+      return
+    }
+    
+    if (!orderData.shippingAddress || orderData.shippingAddress.trim().length < 10) {
+      showToast('Please enter a complete shipping address', 'error')
+      return
+    }
+
+    if (cartItems.length === 0) {
+      showToast('Your cart is empty', 'error')
       return
     }
 
     setLoading(true)
+    const successfulOrders = []
+    const failedOrders = []
+    
     try {
       // Place orders for each item in cart
       for (const item of cartItems) {
-        await axios.post('/orders', {
-          sneakerId: item.id,
-          shippingAddress: orderData.shippingAddress,
-          phoneNumber: orderData.phoneNumber,
-          receiverName: orderData.receiverName,
-          paymentMethod: orderData.paymentMethod
-        })
+        try {
+          await axios.post('/orders', {
+            sneakerId: item.id,
+            shippingAddress: orderData.shippingAddress.trim(),
+            phoneNumber: orderData.phoneNumber.trim(),
+            receiverName: orderData.receiverName.trim(),
+            paymentMethod: orderData.paymentMethod
+          })
+          successfulOrders.push(item.name)
+        } catch (error) {
+          console.error(`Failed to order ${item.name}:`, error)
+          failedOrders.push({
+            name: item.name,
+            error: error.response?.data?.error || 'Unknown error'
+          })
+        }
       }
       
-      showToast('Orders placed successfully!', 'success')
-      clearCart()
-      setShowCheckout(false)
-      navigate('/my-orders')
+      // Show results
+      if (successfulOrders.length > 0 && failedOrders.length === 0) {
+        showToast(`All ${successfulOrders.length} orders placed successfully!`, 'success')
+        clearCart()
+        setShowCheckout(false)
+        navigate('/my-orders')
+      } else if (successfulOrders.length > 0 && failedOrders.length > 0) {
+        showToast(`${successfulOrders.length} orders placed. ${failedOrders.length} failed.`, 'warning')
+        // Remove successful items from cart
+        successfulOrders.forEach(name => {
+          const item = cartItems.find(i => i.name === name)
+          if (item) removeFromCart(item.id)
+        })
+      } else {
+        showToast('All orders failed. Please try again.', 'error')
+      }
     } catch (error) {
-      showToast(error.response?.data?.error || 'Failed to place order', 'error')
+      showToast('Failed to place orders. Please try again.', 'error')
     } finally {
       setLoading(false)
     }

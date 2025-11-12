@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
+import { useCurrency } from '../context/CurrencyContext'
 import { Heart, Trash2 } from 'lucide-react'
 
 const Favorites = () => {
   const { token } = useAuth()
+  const { formatPrice } = useCurrency()
   const navigate = useNavigate()
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
@@ -78,7 +80,7 @@ const Favorites = () => {
                     <p className="text-sm text-gray-500">{sneaker.brand}</p>
                     <h3 className="font-semibold text-lg line-clamp-1">{sneaker.name}</h3>
                     <p className="text-gray-600 text-sm mb-2">Size: {sneaker.size}</p>
-                    <p className="text-2xl font-bold text-primary">${sneaker.price}</p>
+                    <p className="text-2xl font-bold text-primary">{formatPrice(sneaker.price)}</p>
                   </div>
                 </Link>
                 <button

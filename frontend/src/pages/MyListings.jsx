@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from '../utils/axios'
 import { useAuth } from '../context/AuthContext'
+import { useCurrency } from '../context/CurrencyContext'
 import { useToast } from '../context/ToastContext'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { Edit, Trash2, Package, DollarSign, Eye, X, Plus, Upload, Link as LinkIcon } from 'lucide-react'
 
 const MyListings = () => {
   const { token } = useAuth()
+  const { formatPrice } = useCurrency()
   const navigate = useNavigate()
   const toast = useToast()
   const [sneakers, setSneakers] = useState([])
@@ -186,7 +188,7 @@ const MyListings = () => {
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-2">TOTAL VALUE</p>
                 <p className="text-5xl font-bold">
-                  ${sneakers.reduce((sum, s) => sum + (s.price * s.stock), 0).toFixed(2)}
+                  {formatPrice(sneakers.reduce((sum, s) => sum + (s.price * s.stock), 0))}
                 </p>
               </div>
               <DollarSign className="h-16 w-16 text-black" />
@@ -242,7 +244,7 @@ const MyListings = () => {
                       <div>
                         <p className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">PRICE</p>
                         <p className="text-2xl font-bold">
-                          ${sneaker.price}
+                          {formatPrice(sneaker.price)}
                         </p>
                       </div>
                       <div>

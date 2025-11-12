@@ -26,6 +26,10 @@ export const CurrencyProvider = ({ children }) => {
   }
 
   const formatPrice = (priceInUSD) => {
+    if (!priceInUSD || isNaN(priceInUSD)) {
+      return currency === 'INR' ? '₹0' : '$0.00'
+    }
+    
     if (currency === 'INR') {
       const priceInINR = priceInUSD * exchangeRate
       return `₹${priceInINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`

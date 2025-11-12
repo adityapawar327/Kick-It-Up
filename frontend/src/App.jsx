@@ -17,6 +17,9 @@ import Profile from './pages/Profile'
 import AboutUs from './pages/AboutUs'
 import TestPage from './pages/TestPage'
 import Cart from './pages/Cart'
+import TradeRequests from './pages/TradeRequests'
+import ProposeTrade from './pages/ProposeTrade'
+import Messages from './pages/Messages'
 
 function App() {
   return (
@@ -40,6 +43,9 @@ function App() {
                   <Route path="/my-listings" element={<MyListings />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/cart" element={<Cart />} />
+                  <Route path="/trade-requests" element={<TradeRequests />} />
+                  <Route path="/propose-trade/:id" element={<ProposeTrade />} />
+                  <Route path="/messages" element={<Messages />} />
                   <Route path="/test" element={<TestPage />} />
                 </Routes>
               </div>

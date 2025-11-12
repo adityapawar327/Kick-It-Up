@@ -67,13 +67,19 @@ frontend/.tern-port
 frontend/.turbo/
 frontend/.vercel/
 
-# Environment Variables
+# Environment Variables - CRITICAL: Never commit these!
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
 .env.*.local
+**/.env
+**/frontend/.env
+**/backend/.env
 
 # Keep example env files
 !.env.example

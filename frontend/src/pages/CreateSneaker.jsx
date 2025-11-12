@@ -52,29 +52,74 @@ const CreateSneaker = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Comprehensive validation
+    if (!formData.name || formData.name.trim().length < 2) {
+      toast.error('SNEAKER NAME MUST BE AT LEAST 2 CHARACTERS')
+      return
+    }
+    
+    if (!formData.brand || formData.brand.trim().length < 2) {
+      toast.error('BRAND NAME MUST BE AT LEAST 2 CHARACTERS')
+      return
+    }
+    
+    const price = parseFloat(formData.price)
+    if (isNaN(price) || price <= 0) {
+      toast.error('PRICE MUST BE GREATER THAN 0')
+      return
+    }
+    
+    if (price > 1000000) {
+      toast.error('PRICE CANNOT EXCEED $1,000,000')
+      return
+    }
+    
+    const stock = parseInt(formData.stock)
+    if (isNaN(stock) || stock < 1) {
+      toast.error('STOCK MUST BE AT LEAST 1')
+      return
+    }
+    
+    if (stock > 10000) {
+      toast.error('STOCK CANNOT EXCEED 10,000')
+      return
+    }
+    
+    // Combine URL images and uploaded images
+    const urlImages = formData.imageUrls.filter(url => url.trim() !== '')
+    const allImages = [...urlImages, ...uploadedImages]
+
+    if (allImages.length === 0) {
+      toast.error('PLEASE ADD AT LEAST ONE IMAGE')
+      return
+    }
+    
+    if (allImages.length > 10) {
+      toast.error('MAXIMUM 10 IMAGES ALLOWED')
+      return
+    }
+
     setLoading(true)
-
     try {
-      // Combine URL images and uploaded images
-      const urlImages = formData.imageUrls.filter(url => url.trim() !== '')
-      const allImages = [...urlImages, ...uploadedImages]
-
-      if (allImages.length === 0) {
-        toast.error('PLEASE ADD AT LEAST ONE IMAGE')
-        setLoading(false)
-        return
-      }
-
       const data = {
         ...formData,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
+        name: formData.name.trim(),
+        brand: formData.brand.trim(),
+        description: formData.description?.trim() || '',
+        size: formData.size?.trim() || '',
+        color: formData.color?.trim() || '',
+        condition: formData.condition || 'NEW',
+        price: price,
+        stock: stock,
         imageUrls: allImages
       }
+      
       await axios.post('/sneakers', data)
       toast.success('SNEAKER LISTED SUCCESSFULLY!')
       navigate('/dashboard')
     } catch (error) {
+      console.error('Create sneaker error:', error)
       toast.error(error.response?.data?.error || 'FAILED TO CREATE LISTING')
     } finally {
       setLoading(false)

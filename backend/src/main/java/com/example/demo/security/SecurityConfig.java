@@ -29,8 +29,7 @@ public class SecurityConfig {
                                 "/api/sneakers/all",
                                 "/api/sneakers/available",
                                 "/api/sneakers/{id}",
-                                "/api/reviews/sneaker/**",
-                                "/api/users/{id}").permitAll()
+                                "/api/reviews/sneaker/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

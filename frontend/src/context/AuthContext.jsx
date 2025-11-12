@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
     console.log('AuthContext initialized:', { 
       hasToken: !!savedToken, 
       hasUser: !!savedUser,
+      tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'none',
       user: savedUser ? JSON.parse(savedUser) : null
     })
     
@@ -42,6 +43,7 @@ export const AuthProvider = ({ children }) => {
         const userData = JSON.parse(savedUser)
         setToken(savedToken)
         setUser(userData)
+        console.log('Auth state restored from localStorage')
       } catch (error) {
         console.error('Failed to parse saved user:', error)
         localStorage.removeItem('user')
@@ -49,6 +51,8 @@ export const AuthProvider = ({ children }) => {
         setToken(null)
         setUser(null)
       }
+    } else {
+      console.log('No saved auth state found')
     }
     setLoading(false)
   }, [])
@@ -99,7 +103,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, token, setUser, login, register, logout, loading }}>
-      {children}
+      {!loading ? children : <div>Loading...</div>}
     </AuthContext.Provider>
   )
 }

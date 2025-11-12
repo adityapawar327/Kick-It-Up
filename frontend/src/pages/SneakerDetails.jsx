@@ -5,11 +5,11 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useCurrency } from '../context/CurrencyContext'
 import { useCart } from '../context/CartContext'
-import { Heart, ShoppingCart, Star, MapPin, Phone, X, MessageSquare } from 'lucide-react'
+import { Heart, ShoppingCart, Star, MapPin, Phone, X, MessageSquare, Repeat2, MessageCircle } from 'lucide-react'
 
 const SneakerDetails = () => {
   const { id } = useParams()
-  const { user, token } = useAuth()
+  const { user, token, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { formatPrice } = useCurrency()
@@ -24,15 +24,25 @@ const SneakerDetails = () => {
   const [userHasReviewed, setUserHasReviewed] = useState(false)
   const [aiInfo, setAiInfo] = useState('')
   const [loadingAI, setLoadingAI] = useState(false)
+  const [prosAndCons, setProsAndCons] = useState(null)
+  const [loadingProsAndCons, setLoadingProsAndCons] = useState(false)
 
   useEffect(() => {
+    // Scroll to top when component mounts or ID changes
+    window.scrollTo(0, 0)
+    
     fetchSneakerDetails()
     fetchReviews()
-  }, [id])
+    if (token) {
+      checkIfFavorite()
+    }
+  }, [id, token])
 
   const fetchSneakerDetails = async () => {
     try {
       const response = await axios.get(`/sneakers/${id}`)
+      console.log('Sneaker data:', response.data)
+      console.log('Sneaker status:', response.data.status)
       setSneaker(response.data)
     } catch (error) {
       console.error('Failed to fetch sneaker:', error)
@@ -54,6 +64,16 @@ const SneakerDetails = () => {
     }
   }
 
+  const checkIfFavorite = async () => {
+    if (!token) return
+    try {
+      const response = await axios.get(`/favorites/${id}/check`)
+      setIsFavorite(response.data.isFavorite)
+    } catch (error) {
+      console.error('Failed to check favorite status:', error)
+    }
+  }
+
   const handleAddToFavorites = async () => {
     if (!token) {
       console.log('No token found, redirecting to login')
@@ -70,8 +90,19 @@ const SneakerDetails = () => {
       showToast('Added to favorites!', 'success')
     } catch (error) {
       console.error('Failed to add to favorites:', error)
-      console.error('Error response:', error.response?.data)
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Failed to add to favorites'
+      console.error('Error response:', error.response)
+      console.error('Error status:', error.response?.status)
+      console.error('Error data:', error.response?.data)
+      
+      let errorMsg = 'Failed to add to favorites'
+      if (error.response?.status === 401) {
+        errorMsg = 'Please login again - your session may have expired'
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message
+      }
+      
       showToast(errorMsg, 'error')
     }
   }
@@ -137,7 +168,13 @@ Please provide:
 4. Style tips and outfit recommendations
 5. Value and collectibility insights
 
-Keep the response informative, engaging, and under 300 words.`
+IMPORTANT FORMATTING RULES:
+- Write in plain text paragraphs
+- Do NOT use markdown symbols like **, *, ##, ###, or any other formatting symbols
+- Do NOT use bullet points or numbered lists
+- Write naturally in flowing paragraphs
+- Keep the response informative, engaging, and under 300 words
+- Use clear, descriptive language without special formatting`
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
@@ -178,6 +215,86 @@ Keep the response informative, engaging, and under 300 words.`
       showToast(errorMessage, 'error')
     } finally {
       setLoadingAI(false)
+    }
+  }
+
+  const generateProsAndCons = async () => {
+    if (reviews.length === 0) {
+      showToast('No reviews available to analyze', 'error')
+      return
+    }
+
+    setLoadingProsAndCons(true)
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+      
+      if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+        throw new Error('Please configure your Gemini API key')
+      }
+
+      // Combine all review comments
+      const allReviews = reviews.map(r => `${r.rating}/5 stars: ${r.comment}`).join('\n')
+
+      const prompt = `Analyze these customer reviews for "${sneaker.name}" and extract the key pros and cons:
+
+Reviews:
+${allReviews}
+
+Extract the top 3-5 PROS (positive aspects) and top 3-5 CONS (negative aspects or concerns) mentioned by customers.
+
+Format your response EXACTLY as follows with NO additional text or explanations:
+
+PROS:
+- [specific pro from reviews]
+- [specific pro from reviews]
+- [specific pro from reviews]
+
+CONS:
+- [specific con from reviews]
+- [specific con from reviews]
+- [specific con from reviews]
+
+Rules:
+- Only include points actually mentioned in the reviews
+- Be concise and specific
+- Do NOT add any introductory text, explanations, or conclusions
+- Start directly with "PROS:" and "CONS:"
+- If there are no cons mentioned, write "- No significant concerns mentioned"`
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
+          })
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to generate pros and cons')
+      }
+
+      const data = await response.json()
+      const analysis = data.candidates?.[0]?.content?.parts?.[0]?.text
+      
+      if (!analysis) {
+        throw new Error('No analysis generated')
+      }
+      
+      setProsAndCons(analysis)
+      showToast('Pros & Cons generated!', 'success')
+    } catch (error) {
+      console.error('Pros & Cons generation error:', error)
+      setProsAndCons('⚠️ Unable to generate pros and cons analysis.\n\nTo enable this feature:\n1. Get a free API key from https://makersuite.google.com/app/apikey\n2. Add it to your .env file as VITE_GEMINI_API_KEY\n3. Restart the development server')
+      showToast(error.message || 'Failed to generate analysis', 'error')
+    } finally {
+      setLoadingProsAndCons(false)
     }
   }
 
@@ -290,36 +407,6 @@ Keep the response informative, engaging, and under 300 words.`
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-600">DESCRIPTION</h3>
-                  <button
-                    onClick={handleAIInfo}
-                    disabled={loadingAI}
-                    className="px-4 py-2 bg-white border-2 border-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all disabled:opacity-50"
-                  >
-                    {loadingAI ? 'LOADING...' : 'AI INFO'}
-                  </button>
-                </div>
-                <p className="text-sm text-gray-700 leading-relaxed break-words">{sneaker.description}</p>
-                
-                {aiInfo && (
-                  <div className="mt-6 bg-white border-2 border-black rounded-3xl p-6 animate-slideUp">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-4 pb-3 border-b-2 border-black">
-                      AI INSIGHTS
-                    </h4>
-                    <div className="text-gray-800 leading-relaxed space-y-3">
-                      {aiInfo.split('\n\n').map((paragraph, idx) => (
-                        <p key={idx} className="text-sm leading-relaxed">
-                          {paragraph.replace(/\*\*/g, '').replace(/\*/g, '')}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Reviews Summary */}
               {sneaker.averageRating > 0 && (
                 <div className="mb-8 bg-white border-2 border-black rounded-3xl p-6">
@@ -345,8 +432,24 @@ Keep the response informative, engaging, and under 300 words.`
                   <p className="font-bold text-sm uppercase tracking-wider">THIS IS YOUR LISTING</p>
                   <p className="text-gray-600 mt-2 text-sm uppercase tracking-wider">YOU CANNOT PURCHASE YOUR OWN SNEAKERS</p>
                 </div>
-              ) : sneaker.status === 'AVAILABLE' ? (
+              ) : (sneaker.status === 'AVAILABLE' || !sneaker.status) ? (
                 <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => navigate(`/propose-trade/${id}`)}
+                      className="btn-secondary flex items-center justify-center space-x-2"
+                    >
+                      <Repeat2 className="h-5 w-5" />
+                      <span>TRADE</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/messages?userId=${sneaker.seller.id}`)}
+                      className="btn-secondary flex items-center justify-center space-x-2"
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                      <span>CHAT</span>
+                    </button>
+                  </div>
                   <button
                     onClick={() => {
                       addToCart(sneaker)
@@ -421,6 +524,118 @@ Keep the response informative, engaging, and under 300 words.`
               </div>
             </div>
           )}
+
+          {/* Description Section */}
+          <div className="border-t-2 border-black p-6 lg:p-12">
+            <h3 className="text-display text-3xl font-bold uppercase mb-6">DESCRIPTION</h3>
+            <p className="text-sm text-gray-700 leading-relaxed break-words max-w-4xl">{sneaker.description}</p>
+          </div>
+
+          {/* AI-Powered Sections */}
+          <div className="border-t-2 border-black p-6 lg:p-12">
+            <div className="mb-8">
+              <h2 className="text-display text-4xl font-bold uppercase">AI-POWERED INSIGHTS</h2>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* AI Product Info */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-display text-xl font-bold uppercase">PRODUCT INSIGHTS</h3>
+                  <button
+                    onClick={handleAIInfo}
+                    disabled={loadingAI}
+                    className="px-4 py-2 bg-white border-2 border-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all disabled:opacity-50"
+                  >
+                    {loadingAI ? 'GENERATING...' : 'GENERATE'}
+                  </button>
+                </div>
+                
+                {aiInfo ? (
+                  <div className="bg-white border-2 border-black rounded-3xl p-6 animate-slideUp">
+                    <div className="text-gray-800 leading-relaxed space-y-3">
+                      {aiInfo.split('\n\n').map((paragraph, idx) => {
+                        // Remove all markdown symbols
+                        let cleanText = paragraph
+                          .replace(/\*\*/g, '')
+                          .replace(/\*/g, '')
+                          .replace(/##/g, '')
+                          .replace(/###/g, '')
+                          .replace(/`/g, '')
+                          .trim()
+                        
+                        return (
+                          <p key={idx} className="text-sm leading-relaxed">
+                            {cleanText}
+                          </p>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border-2 border-gray-300 rounded-3xl p-8 text-center">
+                    <p className="text-sm text-gray-600">Click "GENERATE" to get AI-powered product insights</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Pros & Cons from Reviews */}
+              {reviews.length > 0 ? (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-display text-xl font-bold uppercase">CUSTOMER INSIGHTS</h3>
+                    <button
+                      onClick={generateProsAndCons}
+                      disabled={loadingProsAndCons}
+                      className="px-4 py-2 bg-white border-2 border-black rounded-full font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all disabled:opacity-50"
+                    >
+                      {loadingProsAndCons ? 'ANALYZING...' : 'GENERATE'}
+                    </button>
+                  </div>
+                  
+                  {prosAndCons ? (
+                    <div className="bg-white border-2 border-black rounded-3xl p-6 animate-slideUp">
+                      <div className="text-gray-800 leading-relaxed">
+                        {prosAndCons.split('\n').map((line, idx) => {
+                          // Remove markdown symbols
+                          let cleanLine = line.trim()
+                            .replace(/\*\*/g, '')
+                            .replace(/\*/g, '')
+                            .replace(/##/g, '')
+                            .replace(/###/g, '')
+                            .replace(/`/g, '')
+                          
+                          if (cleanLine.startsWith('PROS:')) {
+                            return <h4 key={idx} className="text-sm font-bold uppercase tracking-wider text-green-600 mt-4 mb-2">✓ PROS:</h4>
+                          } else if (cleanLine.startsWith('CONS:')) {
+                            return <h4 key={idx} className="text-sm font-bold uppercase tracking-wider text-red-600 mt-4 mb-2">✗ CONS:</h4>
+                          } else if (cleanLine.startsWith('-')) {
+                            return <p key={idx} className="text-sm ml-4 mb-1">{cleanLine}</p>
+                          } else if (cleanLine.startsWith('⚠️')) {
+                            return <p key={idx} className="text-sm text-gray-600 whitespace-pre-line">{cleanLine}</p>
+                          } else if (cleanLine) {
+                            return <p key={idx} className="text-sm mb-2">{cleanLine}</p>
+                          }
+                          return null
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border-2 border-gray-300 rounded-3xl p-8 text-center">
+                      <p className="text-sm text-gray-600">Click "GENERATE" to analyze customer reviews with AI</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-display text-xl font-bold uppercase mb-4">CUSTOMER INSIGHTS</h3>
+                  <div className="bg-gray-50 border-2 border-gray-300 rounded-3xl p-8 text-center">
+                    <p className="text-sm text-gray-600">No reviews yet. Be the first to review this product!</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Reviews Section */}
           <div className="border-t-2 border-black p-6 lg:p-12">

@@ -11,9 +11,13 @@ const axiosInstance = axios.create({
 // Request interceptor to add token
 axiosInstance.interceptors.request.use(
   (config) => {
+    // Always get fresh token from localStorage
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      console.log('Token attached to request:', token.substring(0, 20) + '...')
+    } else {
+      console.warn('No token found in localStorage')
     }
     return config
   },

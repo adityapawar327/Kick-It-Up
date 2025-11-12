@@ -27,6 +27,20 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderRequest request) {
+        // Validate request
+        if (request == null) {
+            throw new IllegalArgumentException("Order request cannot be null");
+        }
+        if (request.getSneakerId() == null) {
+            throw new IllegalArgumentException("Sneaker ID is required");
+        }
+        if (request.getShippingAddress() == null || request.getShippingAddress().trim().isEmpty()) {
+            throw new IllegalArgumentException("Shipping address is required");
+        }
+        if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
+            throw new IllegalArgumentException("Phone number is required");
+        }
+        
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User buyer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -34,22 +48,41 @@ public class OrderService {
         Sneaker sneaker = sneakerRepository.findByIdWithSeller(request.getSneakerId())
                 .orElseThrow(() -> new RuntimeException("Sneaker not found"));
 
-        if (sneaker.getStatus() != Sneaker.SneakerStatus.AVAILABLE) {
-            throw new RuntimeException("Sneaker is not available");
+        // Validate seller exists
+        if (sneaker.getSeller() == null) {
+            throw new RuntimeException("Sneaker has no seller");
+        }
+        
+        // Prevent buying own sneakers
+        if (sneaker.getSeller().getId().equals(buyer.getId())) {
+            throw new RuntimeException("You cannot buy your own sneakers");
         }
 
-        if (sneaker.getStock() < 1) {
+        // Validate availability
+        if (sneaker.getStatus() != Sneaker.SneakerStatus.AVAILABLE) {
+            throw new RuntimeException("Sneaker is not available for purchase");
+        }
+
+        if (sneaker.getStock() == null || sneaker.getStock() < 1) {
             throw new RuntimeException("Sneaker is out of stock");
         }
+        
+        // Validate price
+        if (sneaker.getPrice() == null || sneaker.getPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Invalid sneaker price");
+        }
 
+        // Create order
         Order order = new Order();
         order.setBuyer(buyer);
         order.setSneaker(sneaker);
         order.setSeller(sneaker.getSeller());
         order.setTotalAmount(sneaker.getPrice());
-        order.setShippingAddress(request.getShippingAddress());
-        order.setPhoneNumber(request.getPhoneNumber());
+        order.setShippingAddress(request.getShippingAddress().trim());
+        order.setPhoneNumber(request.getPhoneNumber().trim());
+        order.setStatus(Order.OrderStatus.PENDING);
 
+        // Update stock atomically
         sneaker.setStock(sneaker.getStock() - 1);
         if (sneaker.getStock() == 0) {
             sneaker.setStatus(Sneaker.SneakerStatus.SOLD);

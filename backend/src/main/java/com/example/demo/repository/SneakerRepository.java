@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface SneakerRepository extends JpaRepository<Sneaker, Long> {
-    @Query("SELECT s FROM Sneaker s JOIN FETCH s.seller")
+    @Query("SELECT s FROM Sneaker s JOIN FETCH s.seller WHERE s.stock > 0")
     List<Sneaker> findAllWithSeller();
     
     @Query("SELECT s FROM Sneaker s JOIN FETCH s.seller WHERE s.id = :id")
@@ -21,6 +21,10 @@ public interface SneakerRepository extends JpaRepository<Sneaker, Long> {
     
     List<Sneaker> findBySeller(User seller);
     List<Sneaker> findByStatus(Sneaker.SneakerStatus status);
+    
+    @Query("SELECT s FROM Sneaker s WHERE s.brand LIKE %:brand% AND s.stock > 0")
     List<Sneaker> findByBrandContainingIgnoreCase(String brand);
+    
+    @Query("SELECT s FROM Sneaker s WHERE s.name LIKE %:name% AND s.stock > 0")
     List<Sneaker> findByNameContainingIgnoreCase(String name);
 }
